@@ -1,0 +1,22 @@
+services:
+  mongo:
+    image: mongo:7
+    container_name: mocktest-mongo
+    restart: unless-stopped
+    command:
+      - /bin/bash
+      - -lc
+      - |
+        mkdir -p /etc/mongo && cp /tmp/mongo-keyfile /etc/mongo/keyfile && chmod 600 /etc/mongo/keyfile && exec mongod --replSet rs0 --bind_ip_all --keyFile /etc/mongo/keyfile
+    environment:
+      MONGO_INITDB_DATABASE: mocktest
+      MONGO_INITDB_ROOT_USERNAME: mocktest
+      MONGO_INITDB_ROOT_PASSWORD: mocktest
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+      - ./mongo-keyfile:/tmp/mongo-keyfile:ro
+
+volumes:
+  mongo_data:

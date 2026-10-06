@@ -1,36 +1,145 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+﻿# Mock Test Platform
 
-## Getting Started
+A production-minded Phase 1 foundation for a mock test platform focused on government and private job preparation.
 
-First, run the development server:
+## Stack
+
+- Frontend: Next.js, React, TypeScript, Tailwind CSS
+- Backend: Next.js API routes and Prisma ORM
+- Database: MongoDB
+- Infrastructure: Docker Compose, Prisma
+
+## Prerequisites
+
+Before starting, install:
+
+- Node.js LTS
+- npm
+- Docker
+- Docker Compose
+
+## Installation
+
+```bash
+npm install
+```
+
+Copy the environment example file and update values if needed:
+
+```bash
+copy .env.example .env
+```
+
+## Start MongoDB
+
+```bash
+docker compose up -d
+```
+
+## Prisma
+
+Generate the Prisma client and sync the schema to MongoDB:
+
+```bash
+npx prisma generate
+npx prisma db push
+```
+
+## Start Application
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```text
+http://localhost:3000
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Health API
 
-## Learn More
+```text
+GET http://localhost:3000/api/health
+```
 
-To learn more about Next.js, take a look at the following resources:
+Expected response:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```json
+{
+  "status": "UP",
+  "service": "mock-test-platform",
+  "database": "UP"
+}
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Project Structure
 
-## Deploy on Vercel
+```text
+mock-test-platform/
+├── app/
+│   ├── api/
+│   │   └── health/
+│   │       └── route.ts
+│   ├── globals.css
+│   ├── layout.tsx
+│   └── page.tsx
+├── components/
+│   └── backend-status.tsx
+├── lib/
+│   ├── env.ts
+│   ├── prisma.ts
+│   └── api.ts
+├── prisma/
+│   └── schema.prisma
+├── .env.example
+├── .gitignore
+├── docker-compose.yml
+├── next.config.ts
+├── package.json
+├── README.md
+├── tsconfig.json
+└── ...
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Authentication and admin flow
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+The platform includes a basic authentication layer and admin-managed question creation.
+
+- Admin login: `admin@mocktest.local`
+- Admin password: `Admin@123`
+- Admin dashboard: `http://localhost:3000/admin`
+- User practice area: `http://localhost:3000/questions`
+
+Admins can create mock-test questions from the admin dashboard. They can also bulk import a CSV file to create multiple questions and optionally generate a mock test in one step. Logged-in users can attempt questions and receive an instant score when they submit their answers.
+
+### CSV mock test import
+
+Use the admin dashboard to upload a CSV containing these columns:
+
+```csv
+questionText,optionA,optionB,optionC,optionD,correctOption,category,difficulty,explanation
+Which planet is known as the Red Planet?,Mercury,Venus,Mars,Jupiter,A,CGL General Awareness,MEDIUM,Mars is known as the Red Planet due to iron oxide on its surface.
+```
+
+The upload flow will:
+
+- create the questions in the question bank
+- optionally create a mock test from those imported questions
+- publish the test immediately if the checkbox is enabled
+
+## Google OAuth
+
+To enable real Google sign in, add the following values to your `.env` file:
+
+```bash
+GOOGLE_CLIENT_ID=your-google-client-id
+GOOGLE_CLIENT_SECRET=your-google-client-secret
+GOOGLE_REDIRECT_URI=http://localhost:3000/api/auth/google/callback
+```
+
+Then create a Google OAuth client in the Google Cloud Console, set the authorized redirect URI to the callback above, and sign in from the login or signup page.
+
+## Notes
+
+This project is intentionally focused on the foundational platform layer and is now configured for MongoDB as the local database.
