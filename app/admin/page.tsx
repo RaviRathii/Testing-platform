@@ -733,6 +733,13 @@ export default function AdminPage() {
           <span className="font-semibold text-slate-800">Optional:</span> category, difficulty, explanation
         </p>
         <p className="mt-1">correctOption can be a letter (A–D), a number (1–4), or the exact answer text.</p>
+        <a
+          href="/questions-template.csv"
+          download
+          className="mt-2 inline-block font-semibold text-indigo-700 hover:text-indigo-500"
+        >
+          Download a template CSV
+        </a>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2">
