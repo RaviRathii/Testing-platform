@@ -154,6 +154,18 @@ export default async function CoursePage({ params }: Props) {
             </Link>
           </section>
 
+          {course.category === "Engineering" && (
+            <section className="rounded-2xl border border-indigo-200 bg-indigo-50 p-5">
+              <h2 className="font-semibold text-slate-900">Ready for an interview?</h2>
+              <p className="mt-1 text-sm text-slate-600">
+                Practise a DSA, system design, or development round with our AI interviewer, or book the expert panel.
+              </p>
+              <Link href="/interviews" className="mt-3 inline-block text-sm font-semibold text-indigo-700 hover:text-indigo-500">
+                Start a mock interview →
+              </Link>
+            </section>
+          )}
+
           <section className="rounded-2xl bg-ink p-5 text-white">
             <h2 className="font-semibold">How to use this course</h2>
             <ol className="mt-3 list-decimal space-y-1.5 pl-5 text-sm text-white/70">

@@ -4,6 +4,14 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { FormEvent, ReactNode, useEffect, useMemo, useState } from "react";
 import { ThemeToggle } from "@/components/theme-toggle";
+import {
+  bookingStatusLabels,
+  formatIst,
+  interviewTracks,
+  PANEL_PRICE_INR,
+  type BookingStatusKey,
+  type InterviewTrackKey,
+} from "@/lib/interviews";
 import { examPresetOptions } from "@/lib/exam-data";
 
 type QuestionRow = {
@@ -40,6 +48,18 @@ type TestRow = {
   createdBy?: string;
 };
 
+type BookingRow = {
+  id: string;
+  track: InterviewTrackKey;
+  scheduledAt: string;
+  priceInr: number;
+  status: BookingStatusKey;
+  notes: string | null;
+  interviewerName: string | null;
+  meetingLink: string | null;
+  candidate: { name: string; email: string };
+};
+
 type Notice = { tone: "success" | "error"; text: string } | null;
 
 type AdminData = {
@@ -47,6 +67,7 @@ type AdminData = {
   questions?: QuestionRow[];
   users?: UserRow[];
   tests?: TestRow[];
+  bookings?: BookingRow[];
 };
 
 async function fetchAdminData(): Promise<AdminData> {
@@ -58,10 +79,11 @@ async function fetchAdminData(): Promise<AdminData> {
       return { isAdmin: false };
     }
 
-    const [questionsResponse, usersResponse, testsResponse] = await Promise.all([
+    const [questionsResponse, usersResponse, testsResponse, bookingsResponse] = await Promise.all([
       fetch("/api/admin/questions", { cache: "no-store" }),
       fetch("/api/admin/users", { cache: "no-store" }),
       fetch("/api/admin/tests", { cache: "no-store" }),
+      fetch("/api/admin/interviews", { cache: "no-store" }),
     ]);
 
     return {
@@ -69,6 +91,7 @@ async function fetchAdminData(): Promise<AdminData> {
       questions: questionsResponse.ok ? ((await questionsResponse.json()) as QuestionRow[]) : undefined,
       users: usersResponse.ok ? ((await usersResponse.json()) as UserRow[]) : undefined,
       tests: testsResponse.ok ? ((await testsResponse.json()) as TestRow[]) : undefined,
+      bookings: bookingsResponse.ok ? ((await bookingsResponse.json()) as BookingRow[]) : undefined,
     };
   } catch {
     return { isAdmin: false };
@@ -108,6 +131,7 @@ const tabs = [
   { key: "overview", label: "Overview", icon: "M3 12l9-9 9 9M5 10v10h5v-6h4v6h5V10" },
   { key: "questions", label: "Questions", icon: "M9 9a3 3 0 1 1 4 2.8c-.6.3-1 .9-1 1.6V14m0 3h.01M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" },
   { key: "tests", label: "Mock tests", icon: "M9 5h10M9 12h10M9 19h10M5 5h.01M5 12h.01M5 19h.01" },
+  { key: "interviews", label: "Interviews", icon: "M15 10l4.6-2.3A1 1 0 0 1 21 8.6v6.8a1 1 0 0 1-1.4.9L15 14M5 18h8a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2Z" },
   { key: "users", label: "Users", icon: "M16 19v-1a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v1m20 0v-1a4 4 0 0 0-3-3.9M15 3.1a4 4 0 0 1 0 7.8M13 7a4 4 0 1 1-8 0 4 4 0 0 1 8 0Z" },
 ] as const;
 
@@ -170,12 +194,123 @@ function Pill({ children, className }: { children: ReactNode; className: string 
   return <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-semibold ${className}`}>{children}</span>;
 }
 
+const bookingStatusTone: Record<BookingStatusKey, string> = {
+  PENDING_PAYMENT: "bg-amber-50 text-amber-800",
+  CONFIRMED: "bg-emerald-50 text-emerald-700",
+  COMPLETED: "bg-slate-100 text-slate-600",
+  CANCELLED: "bg-slate-100 text-slate-500",
+};
+
+type BookingUpdate = Pick<BookingRow, "id" | "status" | "interviewerName" | "meetingLink">;
+
+function AdminBookingRow({
+  booking,
+  onSaved,
+  onError,
+}: {
+  booking: BookingRow;
+  onSaved: (updated: BookingUpdate, message: string) => void;
+  onError: (message: string) => void;
+}) {
+  const [status, setStatus] = useState<BookingStatusKey>(booking.status);
+  const [interviewerName, setInterviewerName] = useState(booking.interviewerName ?? "");
+  const [meetingLink, setMeetingLink] = useState(booking.meetingLink ?? "");
+  const [saving, setSaving] = useState(false);
+
+  const dirty =
+    status !== booking.status ||
+    interviewerName !== (booking.interviewerName ?? "") ||
+    meetingLink !== (booking.meetingLink ?? "");
+
+  const save = async () => {
+    setSaving(true);
+    try {
+      const response = await fetch(`/api/admin/interviews/${booking.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status, interviewerName, meetingLink }),
+      });
+      const data = (await response.json()) as BookingUpdate & { error?: string };
+      if (!response.ok) {
+        throw new Error(data.error ?? "Couldn't update the booking.");
+      }
+      onSaved(data, `Booking for ${booking.candidate.name} updated.`);
+    } catch (error) {
+      onError(error instanceof Error ? error.message : "Couldn't update the booking.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <li className={`${cardClass} p-5`}>
+      <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
+        <div className="min-w-0">
+          <div className="flex flex-wrap items-center gap-2">
+            <p className="font-semibold text-slate-900">
+              {formatIst(booking.scheduledAt, { weekday: "short", day: "numeric", month: "short", hour: "numeric", minute: "2-digit" })}
+            </p>
+            <Pill className="bg-indigo-50 text-indigo-700">{interviewTracks[booking.track].label}</Pill>
+            <Pill className={bookingStatusTone[booking.status]}>{bookingStatusLabels[booking.status]}</Pill>
+          </div>
+          <p className="mt-1 text-sm text-slate-600">
+            {booking.candidate.name} ·{" "}
+            <a href={`mailto:${booking.candidate.email}`} className="text-indigo-700 hover:text-indigo-500">
+              {booking.candidate.email}
+            </a>{" "}
+            · ₹{booking.priceInr}
+          </p>
+          {booking.notes && <p className="mt-2 max-w-xl whitespace-pre-wrap text-sm text-slate-600">“{booking.notes}”</p>}
+        </div>
+
+        <div className="grid shrink-0 gap-2 sm:grid-cols-2 sm:items-end xl:grid-cols-[150px_150px_210px_auto]">
+          <label className="space-y-1 text-xs font-medium text-slate-600">
+            Status
+            <select value={status} onChange={(event) => setStatus(event.target.value as BookingStatusKey)} className={`${inputClass} py-2`}>
+              {Object.entries(bookingStatusLabels).map(([key, label]) => (
+                <option key={key} value={key}>
+                  {label}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="space-y-1 text-xs font-medium text-slate-600">
+            Interviewer
+            <input value={interviewerName} onChange={(event) => setInterviewerName(event.target.value)} placeholder="Name" className={`${inputClass} py-2`} />
+          </label>
+          <label className="space-y-1 text-xs font-medium text-slate-600">
+            Meeting link
+            <input
+              value={meetingLink}
+              onChange={(event) => setMeetingLink(event.target.value)}
+              placeholder="https://meet.google.com/..."
+              className={`${inputClass} py-2`}
+            />
+          </label>
+          <button
+            type="button"
+            onClick={() => void save()}
+            disabled={!dirty || saving}
+            className="rounded-full bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-500 disabled:opacity-40"
+          >
+            {saving ? "Saving..." : "Save"}
+          </button>
+        </div>
+      </div>
+    </li>
+  );
+}
+
 export default function AdminPage() {
   const router = useRouter();
   const [isAdmin, setIsAdmin] = useState(false);
   const [questions, setQuestions] = useState<QuestionRow[]>([]);
   const [users, setUsers] = useState<UserRow[]>([]);
   const [tests, setTests] = useState<TestRow[]>([]);
+  const [bookings, setBookings] = useState<BookingRow[]>([]);
+  // "Upcoming" is relative to when the page loaded; reading the clock during render isn't allowed.
+  const [loadedAt] = useState(() => Date.now());
+  const [bookingFilter, setBookingFilter] = useState<"upcoming" | "pending" | "all">("upcoming");
   const [loading, setLoading] = useState(true);
   const [submittingQuestion, setSubmittingQuestion] = useState(false);
   const [submittingTest, setSubmittingTest] = useState(false);
@@ -218,6 +353,7 @@ export default function AdminPage() {
     if (data.questions) setQuestions(data.questions);
     if (data.users) setUsers(data.users);
     if (data.tests) setTests(data.tests);
+    if (data.bookings) setBookings(data.bookings);
     setLoading(false);
   };
 
@@ -479,6 +615,7 @@ export default function AdminPage() {
     questions: stats.totalQuestions,
     tests: stats.totalTests,
     users: stats.totalUsers,
+    interviews: bookings.filter((booking) => booking.status === "PENDING_PAYMENT").length,
   };
 
   const renderOverview = () => {
@@ -1150,6 +1287,73 @@ export default function AdminPage() {
     </div>
   );
 
+  const renderInterviews = () => {
+    const visible = bookings
+      .filter((booking) =>
+        bookingFilter === "pending"
+          ? booking.status === "PENDING_PAYMENT"
+          : bookingFilter === "upcoming"
+            ? new Date(booking.scheduledAt).getTime() >= loadedAt - 60 * 60 * 1000 && booking.status !== "CANCELLED"
+            : true,
+      )
+      .sort((a, b) =>
+        bookingFilter === "all"
+          ? new Date(b.scheduledAt).getTime() - new Date(a.scheduledAt).getTime()
+          : new Date(a.scheduledAt).getTime() - new Date(b.scheduledAt).getTime(),
+      );
+    const pending = bookings.filter((booking) => booking.status === "PENDING_PAYMENT").length;
+
+    return (
+      <div className="space-y-6">
+        <SectionHeader
+          title="Panel interviews"
+          description={`₹${PANEL_PRICE_INR}/hour bookings · ${pending} awaiting payment confirmation · times in IST`}
+        />
+
+        <div className="flex flex-wrap gap-2" role="radiogroup" aria-label="Filter bookings">
+          {(
+            [
+              ["upcoming", "Upcoming"],
+              ["pending", `Pending payment (${pending})`],
+              ["all", "All"],
+            ] as const
+          ).map(([key, label]) => (
+            <button
+              key={key}
+              type="button"
+              role="radio"
+              aria-checked={bookingFilter === key}
+              onClick={() => setBookingFilter(key)}
+              className={`rounded-full px-3.5 py-1.5 text-sm font-semibold ${
+                bookingFilter === key ? "bg-ink text-white" : "border border-slate-200 bg-surface text-slate-600 hover:border-slate-300"
+              }`}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+
+        {visible.length === 0 ? (
+          <div className={`${cardClass} p-10 text-center text-sm text-slate-500`}>No bookings here.</div>
+        ) : (
+          <ul className="space-y-3">
+            {visible.map((booking) => (
+              <AdminBookingRow
+                key={booking.id}
+                booking={booking}
+                onSaved={(updated, message) => {
+                  setBookings((current) => current.map((item) => (item.id === updated.id ? { ...item, ...updated } : item)));
+                  setNotice({ tone: "success", text: message });
+                }}
+                onError={(message) => setNotice({ tone: "error", text: message })}
+              />
+            ))}
+          </ul>
+        )}
+      </div>
+    );
+  };
+
   const renderUsers = () => (
     <div className="space-y-6">
       <SectionHeader
@@ -1316,6 +1520,7 @@ export default function AdminPage() {
           {activeTab === "overview" && renderOverview()}
           {activeTab === "questions" && renderQuestions()}
           {activeTab === "tests" && renderTests()}
+          {activeTab === "interviews" && renderInterviews()}
           {activeTab === "users" && renderUsers()}
         </div>
       </main>

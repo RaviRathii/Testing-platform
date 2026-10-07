@@ -42,6 +42,8 @@ model User {
   quizAttempts     QuizAttempt[]
   createdQuestions Question[]     @relation("CreatedQuestions")
   createdMockTests MockTest[]     @relation("CreatedMockTests")
+  interviewSessions InterviewSession[]
+  interviewBookings InterviewBooking[]
 }
 
 model Subscription {
@@ -126,4 +128,66 @@ model AttemptAnswer {
   selectedOption Int
   isCorrect     Boolean
   createdAt     DateTime    @default(now())
+}
+
+enum InterviewTrack {
+  DSA
+  SYSTEM_DESIGN
+  DEVELOPMENT
+}
+
+enum InterviewLevel {
+  JUNIOR
+  MID
+  SENIOR
+}
+
+enum InterviewSessionStatus {
+  IN_PROGRESS
+  COMPLETED
+}
+
+enum InterviewBookingStatus {
+  PENDING_PAYMENT
+  CONFIRMED
+  COMPLETED
+  CANCELLED
+}
+
+// An AI mock interview. Messages are the plain-text transcript ({ role, content, hidden? }[]).
+model InterviewSession {
+  id           String                 @id @default(auto()) @map("_id") @db.ObjectId
+  userId       String                 @db.ObjectId
+  user         User                   @relation(fields: [userId], references: [id])
+  track        InterviewTrack
+  level        InterviewLevel
+  status       InterviewSessionStatus @default(IN_PROGRESS)
+  messages     Json
+  report       Json?
+  overallScore Int?
+  createdAt    DateTime               @default(now())
+  updatedAt    DateTime               @updatedAt
+  completedAt  DateTime?
+
+  @@index([userId, createdAt])
+}
+
+// A one-hour interview with the human panel, paid offline and confirmed by an admin.
+model InterviewBooking {
+  id              String                 @id @default(auto()) @map("_id") @db.ObjectId
+  userId          String                 @db.ObjectId
+  user            User                   @relation(fields: [userId], references: [id])
+  track           InterviewTrack
+  scheduledAt     DateTime
+  durationMinutes Int                    @default(60)
+  priceInr        Int
+  status          InterviewBookingStatus @default(PENDING_PAYMENT)
+  notes           String?
+  interviewerName String?
+  meetingLink     String?
+  createdAt       DateTime               @default(now())
+  updatedAt       DateTime               @updatedAt
+
+  @@index([scheduledAt])
+  @@index([userId, scheduledAt])
 }
