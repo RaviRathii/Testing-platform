@@ -2,7 +2,9 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { CourseCard } from "@/components/course-card";
 import { SiteHeader } from "@/components/site-header";
+import { categoryBlurbs, courseCategories, courses, coursesByCategory, type CourseCategory } from "@/lib/courses";
 
 const features = [
   {
@@ -40,386 +42,6 @@ const plusFeatures = [
   "Section-wise performance analysis",
 ];
 
-const examByCategory = {
-  SSC: [
-    {
-      name: "SSC CGL",
-      description: "Tier 1 and Tier 2 objective-focused mock tests for General Studies, Quant, English, and Reasoning.",
-      details: ["Tier 1 • 100 Q • 60 min", "Tier 2 Paper 1 • 150 Q • Session-based"],
-      notes: [
-        "Arithmetic & Number System",
-        "Reasoning & Data Interpretation",
-        "General Awareness & Current Affairs",
-      ],
-    },
-    {
-      name: "SSC CHSL",
-      description: "Tier-based practice for General Intelligence, English, Quant, and skill/typing readiness.",
-      details: ["Tier 1 • 100 Q • 60 min", "Tier 2 • 135 Q • Session-based"],
-      notes: [
-        "English Grammar & Vocabulary",
-        "Quantitative Aptitude",
-        "Skill/Typing & Computer Basics",
-      ],
-    },
-    {
-      name: "SSC MTS",
-      description: "Session-based mock tests designed for quick revision and paper strategy.",
-      details: ["Session 1 • 40 Q • 45 min", "Session 2 • 50 Q • 45 min"],
-      notes: [
-        "Basic Maths & Speed Calculation",
-        "Reasoning Shortcuts",
-        "General Awareness Revision",
-      ],
-    },
-    {
-      name: "SSC GD Constable",
-      description: "Computer-based exam practice for general awareness, reasoning, maths, and aptitude.",
-      details: ["Computer Based Exam • 80 Q • 60 min"],
-      notes: [
-        "GK & Current Affairs",
-        "Reasoning & Basic Maths",
-        "Computer Knowledge",
-      ],
-    },
-    {
-      name: "SSC CPO",
-      description: "Multi-paper mock test pattern for objective reasoning and quantitative sections.",
-      details: ["Paper 1 • 200 Q • 2 hours", "Paper 2 • 200 Q • 2 hours"],
-      notes: [
-        "Advanced Reasoning",
-        "Quantitative Ability",
-        "General Awareness & English",
-      ],
-    },
-    {
-      name: "SSC JE",
-      description: "Engineering aptitude and technical reasoning mock practice with paper-level difficulty.",
-      details: ["Paper 1 • 200 Q • 2 hours"],
-      notes: [
-        "Technical Concepts",
-        "Engineering Aptitude",
-        "General Awareness",
-      ],
-    },
-    {
-      name: "SSC Stenographer",
-      description: "Computer-based practice for aptitude, English, and transcription readiness.",
-      details: ["Computer Based Exam • 200 Q • 2 hours"],
-      notes: [
-        "English & Dictation Practice",
-        "Reasoning & Quant",
-        "Typing & Accuracy",
-      ],
-    },
-    {
-      name: "SSC Selection Post",
-      description: "Matriculation, Higher Secondary, and Graduate-level mock test combinations.",
-      details: [
-        "Matriculation • 100 Q • 60 min",
-        "Higher Secondary • 100 Q • 60 min",
-        "Graduate • 100 Q • 60 min",
-      ],
-      notes: [
-        "General Awareness",
-        "Quant & Reasoning",
-        "Post-specific Level Practice",
-      ],
-    },
-  ],
-  Banking: [
-    {
-      name: "IBPS PO",
-      description: "Prelims and mains-oriented mock practice for aptitude, reasoning, and English.",
-      details: ["Prelims • 100 Q • 60 min", "Mains • 225 Q • 3 hours"],
-      notes: [
-        "Quant & DI Mastery",
-        "Reasoning & Puzzle Practice",
-        "English Reading & Error Detection",
-      ],
-    },
-    {
-      name: "IBPS Clerk",
-      description: "Focused practice for numerical ability, reasoning, and language proficiency.",
-      details: ["Prelims • 100 Q • 60 min"],
-      notes: [
-        "Speed Maths",
-        "Simplification Tricks",
-        "Grammar & Vocabulary",
-      ],
-    },
-    {
-      name: "SBI PO",
-      description: "Mock test structure aligned to SBI aptitude, reasoning, and descriptive preparation.",
-      details: ["Prelims • 100 Q • 60 min", "Mains • 155 Q • 3 hours"],
-      notes: [
-        "Data Interpretation",
-        "Reasoning Puzzles",
-        "Current Affairs & Banking Awareness",
-      ],
-    },
-    {
-      name: "SBI Clerk",
-      description: "Targeted tests for aptitude, reasoning, and English language scoring practice.",
-      details: ["Prelims • 100 Q • 60 min"],
-      notes: [
-        "Basic Arithmetic",
-        "Logic & sequences",
-        "English Usage & Comprehension",
-      ],
-    },
-    {
-      name: "RBI Grade B",
-      description: "Advanced mock format for economic awareness, reasoning, and GA-based scoring.",
-      details: ["Phase 1 • 120 Q • 90 min"],
-      notes: [
-        "Economics & Banking Awareness",
-        "Reasoning & Caselets",
-        "Current Affairs Deep Revision",
-      ],
-    },
-    {
-      name: "IBPS RRB",
-      description: "Regional rural bank exam preparation across reasoning, quant, and reasoning aptitude.",
-      details: ["Prelims • 80 Q • 60 min"],
-      notes: [
-        "Speed Maths",
-        "Reasoning Ability",
-        "Banking Awareness",
-      ],
-    },
-  ],
-  Railway: [
-    {
-      name: "RRB NTPC",
-      description: "General awareness and aptitude readiness for non-technical rail recruitment exams.",
-      details: ["Stage 1 • 100 Q • 90 min"],
-      notes: [
-        "General Awareness",
-        "Maths & Reasoning",
-        "Time Management",
-      ],
-    },
-    {
-      name: "RRB Group D",
-      description: "Foundation mock tests covering aptitude, reasoning, Japanese, and general awareness.",
-      details: ["Computer Based Test • 100 Q • 90 min"],
-      notes: [
-        "Basic Maths",
-        "Reasoning Fundamentals",
-        "Railway GK",
-      ],
-    },
-    {
-      name: "RRB JE",
-      description: "Technical and non-technical paper practice for railway engineering recruitment.",
-      details: ["Paper 1 • 100 Q • 90 min"],
-      notes: [
-        "Engineering Concepts",
-        "Technical Aptitude",
-        "General Fundamentals",
-      ],
-    },
-    {
-      name: "RRB ALP",
-      description: "Practice sheets for technical ability, reasoning, and general knowledge modules.",
-      details: ["Stage 1 • 75 Q • 60 min"],
-      notes: [
-        "Technical MCQs",
-        "Reasoning Patterns",
-        "Railway Awareness",
-      ],
-    },
-    {
-      name: "RRB Technician",
-      description: "Focused exam strategy for technical and aptitude-based rail recruitment modules.",
-      details: ["Computer Based Test • 100 Q • 90 min"],
-      notes: [
-        "Aptitude Drills",
-        "Technical Practice",
-        "Accuracy & Speed",
-      ],
-    },
-    {
-      name: "Indian Railways",
-      description: "General railway recruitment preparation with aptitude and reasoning based test patterns.",
-      details: ["Multiple stage patterns"],
-      notes: [
-        "Static GK",
-        "Railway Rules & Awareness",
-        "Reasoning Practice",
-      ],
-    },
-  ],
-  UPSC: [
-    {
-      name: "UPSC CSE Prelims",
-      description: "GS and CSAT-style prelim practice to improve scoring and time management.",
-      details: ["GS • 100 Q • 2 hours", "CSAT • 80 Q • 2 hours"],
-      notes: [
-        "Polity & Economy",
-        "History & Geography",
-        "CSAT Problem Solving",
-      ],
-    },
-    {
-      name: "UPSC CDS",
-      description: "Comprehensive exercise for general knowledge and elementary mathematics sections.",
-      details: ["Written exam • 200 Q • 2 hours"],
-      notes: [
-        "General Knowledge",
-        "Elementary Maths",
-        "English Language",
-      ],
-    },
-    {
-      name: "UPSC CAPF",
-      description: "General ability and aptitude mock practice for central armed forces recruitment.",
-      details: ["Objective paper • 200 Q • 2 hours"],
-      notes: [
-        "Current Affairs",
-        "General Ability",
-        "Reasoning & GK",
-      ],
-    },
-    {
-      name: "UPSC IFS",
-      description: "Subject-based test readiness for civil services and general aptitude modules.",
-      details: ["Prelims • 120 Q • 2 hours"],
-      notes: [
-        "Economy & Society",
-        "Geography & Environment",
-        "Analytical Reading",
-      ],
-    },
-    {
-      name: "UPSC NDA",
-      description: "Mathematics and general ability mock tests for defence aspirants.",
-      details: ["Maths • 120 Q • 2.5 hours", "GAT • 150 Q • 2.5 hours"],
-      notes: [
-        "Maths Speed Tricks",
-        "General Ability",
-        "Current Affairs & GK",
-      ],
-    },
-  ],
-  "State Government": [
-    {
-      name: "State PSC",
-      description: "Mock modules for state-level general studies, aptitude, and local governance questions.",
-      details: ["Prelims • 100 Q • 60 min"],
-      notes: [
-        "State GK & Administration",
-        "General Studies",
-        "Current Affairs",
-      ],
-    },
-    {
-      name: "Police Constable",
-      description: "Reasoning, GK, and physical readiness oriented exam simulations.",
-      details: ["Objective exam • 80 Q • 60 min"],
-      notes: [
-        "Reasoning Ability",
-        "GK & Current Affairs",
-        "Numerical Aptitude",
-      ],
-    },
-    {
-      name: "Forest Guard",
-      description: "Ideal for general knowledge, reasoning, and subject-wise confidence building.",
-      details: ["Objective exam • 100 Q • 90 min"],
-      notes: [
-        "General Knowledge",
-        "Reasoning Practice",
-        "Environment & Ecology",
-      ],
-    },
-    {
-      name: "Teaching Eligibility",
-      description: "Practice sets for child development, pedagogy, and general aptitude modules.",
-      details: ["Paper 1 • 150 Q • 2 hours"],
-      notes: [
-        "Pedagogy",
-        "Child Development",
-        "General Aptitude",
-      ],
-    },
-    {
-      name: "Clerk Recruitment",
-      description: "Mock practice across reasoning, typing, and basic aptitude for clerical roles.",
-      details: ["Objective exam • 100 Q • 60 min"],
-      notes: [
-        "Typing Speed",
-        "Reasoning Fundamentals",
-        "Basic Arithmetic",
-      ],
-    },
-  ],
-  "Private Jobs": [
-    {
-      name: "Software Development",
-      description: "Coding and problem-solving mock practice for development roles and technical interviews.",
-      details: ["Aptitude • 40 Q • 45 min", "Coding • 2 rounds"],
-      notes: [
-        "DSA Fundamentals",
-        "Problem-Solving Practice",
-        "System Design Basics",
-      ],
-    },
-    {
-      name: "Java",
-      description: "Programming problem sets for Java-specific concepts and coding aptitude.",
-      details: ["Java basics • 25 Q • 30 min"],
-      notes: [
-        "OOP Concepts",
-        "Collections & Streams",
-        "Core Java Practice",
-      ],
-    },
-    {
-      name: "Python",
-      description: "Python challenge readiness with logic, OOP, and data structure exercises.",
-      details: ["Python fundamentals • 30 Q • 40 min"],
-      notes: [
-        "Data Structures",
-        "OOP & Pythonic Syntax",
-        "Logical Reasoning",
-      ],
-    },
-    {
-      name: "SQL",
-      description: "Database question practice for joins, queries, indexing, and problem-solving.",
-      details: ["SQL test • 25 Q • 30 min"],
-      notes: [
-        "Joins & Subqueries",
-        "Indexes & Constraints",
-        "DDL/DML Practice",
-      ],
-    },
-    {
-      name: "Data Science",
-      description: "Statistics, machine learning, and analytics assessment modules for data-driven roles.",
-      details: ["Analytics • 20 Q • 30 min"],
-      notes: [
-        "Statistics",
-        "Probability",
-        "Data Visualization",
-      ],
-    },
-    {
-      name: "Aptitude",
-      description: "Speed and accuracy practice for arithmetic, logical reasoning, and analytical thinking.",
-      details: ["Aptitude • 30 Q • 45 min"],
-      notes: [
-        "Arithmetic Skills",
-        "Logical Reasoning",
-        "Speed Accuracy",
-      ],
-    },
-  ],
-} as const;
-
-const categoryOrder = Object.keys(examByCategory) as Array<keyof typeof examByCategory>;
 
 const sampleOptions = ["40 km/h", "50 km/h", "60 km/h", "70 km/h"];
 
@@ -432,7 +54,7 @@ function Icon({ path }: { path: string }) {
 }
 
 export default function Home() {
-  const [activeCategory, setActiveCategory] = useState<keyof typeof examByCategory>("SSC");
+  const [activeCategory, setActiveCategory] = useState<CourseCategory>("SSC");
 
   return (
     <main className="min-h-screen text-slate-900">
@@ -444,7 +66,7 @@ export default function Home() {
           <div>
             <p className="inline-flex items-center gap-2 rounded-full border border-indigo-200 bg-white px-3 py-1 text-xs font-semibold text-indigo-700">
               <span className="h-1.5 w-1.5 rounded-full bg-indigo-500" />
-              SSC, Banking, Railway, UPSC &amp; more
+              SSC, Banking, Railway, UPSC &amp; Engineering
             </p>
             <h1 className="mt-6 text-4xl font-bold leading-tight tracking-tight text-slate-900 sm:text-5xl">
               Practise like it&apos;s <span className="text-indigo-600">exam day.</span>
@@ -462,10 +84,10 @@ export default function Home() {
                 Browse mock tests
               </Link>
               <Link
-                href="/questions"
+                href="/courses"
                 className="rounded-full border border-slate-300 bg-white px-6 py-3 text-center text-base font-semibold text-slate-700 hover:border-slate-400 hover:text-slate-900"
               >
-                Practise questions
+                Explore courses
               </Link>
             </div>
             <p className="mt-4 text-sm text-slate-500">Full access for ₹49/month. Cancel anytime.</p>
@@ -540,21 +162,23 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Exam categories */}
-      <section id="categories" className="mx-auto max-w-6xl scroll-mt-20 px-4 py-16 sm:px-6 lg:px-8">
+      {/* Courses */}
+      <section id="courses" className="mx-auto max-w-6xl scroll-mt-20 px-4 py-16 sm:px-6 lg:px-8">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <p className="text-sm font-semibold uppercase tracking-[0.2em] text-indigo-700">Exams</p>
-            <h2 className="mt-2 text-3xl font-bold tracking-tight text-slate-900">Government &amp; private job exams</h2>
-            <p className="mt-2 max-w-2xl text-slate-600">Exam patterns and key topics for the papers you&apos;re preparing for.</p>
+            <p className="text-sm font-semibold uppercase tracking-[0.2em] text-indigo-700">Courses</p>
+            <h2 className="mt-2 text-3xl font-bold tracking-tight text-slate-900">Government exams &amp; engineering</h2>
+            <p className="mt-2 max-w-2xl text-slate-600">
+              Subject-wise syllabus, practice questions, and mock tests for every exam you&apos;re preparing for.
+            </p>
           </div>
-          <Link href="/tests" className="shrink-0 text-sm font-semibold text-indigo-700 hover:text-indigo-500">
-            See available mock tests →
+          <Link href="/courses" className="shrink-0 text-sm font-semibold text-indigo-700 hover:text-indigo-500">
+            Browse all {courses.length} courses →
           </Link>
         </div>
 
-        <div className="mt-8 flex gap-2 overflow-x-auto pb-1" role="tablist" aria-label="Exam categories">
-          {categoryOrder.map((category) => (
+        <div className="mt-8 flex gap-2 overflow-x-auto pb-1" role="tablist" aria-label="Course categories">
+          {courseCategories.map((category) => (
             <button
               key={category}
               type="button"
@@ -572,32 +196,10 @@ export default function Home() {
           ))}
         </div>
 
-        <div className="mt-6 grid gap-4 md:grid-cols-2 lg:grid-cols-3" role="tabpanel">
-          {examByCategory[activeCategory].map((exam) => (
-            <article
-              key={exam.name}
-              className="flex flex-col rounded-2xl border border-slate-200 bg-white p-5 shadow-sm hover:border-indigo-200 hover:shadow-md"
-            >
-              <h3 className="text-lg font-semibold text-slate-900">{exam.name}</h3>
-              <p className="mt-2 text-sm leading-6 text-slate-600">{exam.description}</p>
-
-              <ul className="mt-4 space-y-1.5">
-                {exam.details.map((detail) => (
-                  <li key={detail} className="flex items-center gap-2 text-sm text-slate-700">
-                    <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-indigo-500" />
-                    {detail}
-                  </li>
-                ))}
-              </ul>
-
-              <div className="mt-auto flex flex-wrap gap-1.5 pt-5">
-                {exam.notes.map((note) => (
-                  <span key={note} className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-600">
-                    {note}
-                  </span>
-                ))}
-              </div>
-            </article>
+        <p className="mt-4 text-sm text-slate-600">{categoryBlurbs[activeCategory]}</p>
+        <div className="mt-4 grid gap-4 md:grid-cols-2 lg:grid-cols-3" role="tabpanel">
+          {coursesByCategory(activeCategory).map((course) => (
+            <CourseCard key={course.slug} course={course} />
           ))}
         </div>
       </section>

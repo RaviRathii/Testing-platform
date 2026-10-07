@@ -35,7 +35,15 @@ type AuthUser = {
 
 const EXAM_DURATION_MS = 60 * 60 * 1000;
 
-export function QuestionPractice() {
+type PracticeFilter = {
+  /** RegExp source matched against question categories (RegExp objects can't cross the server/client boundary). */
+  pattern: string;
+  flags: string;
+};
+
+export function QuestionPractice({ title = "Question bank", filter }: { title?: string; filter?: PracticeFilter }) {
+  const filterPattern = filter?.pattern;
+  const filterFlags = filter?.flags;
   const [questions, setQuestions] = useState<Question[]>([]);
   const [answers, setAnswers] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
@@ -140,7 +148,10 @@ export function QuestionPractice() {
           subscription?: SubscriptionStatus;
         };
 
-        setQuestions(questionData);
+        const categoryMatch = filterPattern ? new RegExp(filterPattern, filterFlags) : null;
+        setQuestions(
+          categoryMatch ? questionData.filter((question) => categoryMatch.test(question.category)) : questionData,
+        );
         setSubscription(subscriptionData.subscription ?? { plan: "FREE", status: "ACTIVE" });
       } catch {
         setQuestions([]);
@@ -151,7 +162,7 @@ export function QuestionPractice() {
     };
 
     void loadQuestions();
-  }, []);
+  }, [filterPattern, filterFlags]);
 
   useEffect(() => {
     if (!questions.length || result) {
@@ -221,14 +232,14 @@ export function QuestionPractice() {
   };
 
   if (loading) {
-    return <div className="rounded-2xl border border-slate-200 bg-white p-6">Loading SSC CGL Tier 1 mock exam...</div>;
+    return <div className="rounded-2xl border border-slate-200 bg-white p-6">Loading practice questions...</div>;
   }
 
   if (!user) {
     return (
       <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-6 text-slate-700">
         <p className="text-lg font-semibold text-slate-900">Login required</p>
-        <p className="mt-2">Sign in to attempt the SSC CGL Tier 1 mock exam and review your result.</p>
+        <p className="mt-2">Sign in to practise questions and review your result.</p>
         <div className="mt-4 flex flex-wrap gap-3">
           <a
             href="/login"
@@ -251,7 +262,7 @@ export function QuestionPractice() {
     return (
       <div className="rounded-2xl border border-amber-200 bg-amber-50 p-6 text-amber-900">
         <p className="text-lg font-semibold">Subscription required</p>
-        <p className="mt-2 text-sm">Unlock the SSC CGL Tier 1 mock test for ₹49/month.</p>
+        <p className="mt-2 text-sm">Unlock practice questions and every mock test for ₹49/month.</p>
         <button
           type="button"
           onClick={() => {
@@ -269,7 +280,7 @@ export function QuestionPractice() {
   if (!questions.length) {
     return (
       <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-6 text-slate-700">
-        No mock exam questions are available yet. Please ask an admin to add the SSC CGL Tier 1 set.
+        No practice questions are available for this subject yet. Check back soon, or try another subject.
       </div>
     );
   }
@@ -283,8 +294,8 @@ export function QuestionPractice() {
       <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
         <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
           <div>
-            <p className="text-sm font-semibold uppercase tracking-[0.2em] text-slate-500">SSC CGL Tier 1</p>
-            <h2 className="mt-1 text-xl font-bold text-slate-900">Mock exam</h2>
+            <p className="text-sm font-semibold uppercase tracking-[0.2em] text-slate-500">Practice</p>
+            <h2 className="mt-1 text-xl font-bold text-slate-900">{title}</h2>
           </div>
           <div className="rounded-full bg-indigo-100 px-3 py-1.5 text-sm font-semibold text-indigo-700">
             Time left: {formatTime(timeLeft)}

@@ -11,6 +11,7 @@ type HeaderUser = {
 };
 
 const navLinks = [
+  { href: "/courses", label: "Courses" },
   { href: "/tests", label: "Mock tests" },
   { href: "/questions", label: "Practice" },
 ];

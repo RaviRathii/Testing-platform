@@ -1,3 +1,5 @@
+import { courses } from "@/lib/courses";
+
 export type ExamStageInfo = {
   exam: string;
   stage: string;
@@ -122,4 +124,8 @@ export const examStageCatalog: ExamStageInfo[] = [
   },
 ];
 
-export const examPresetOptions = examStageCatalog.map((item) => `${item.exam} - ${item.stage}`);
+// Course names are included so a test labelled with one shows up on that course's page.
+export const examPresetOptions = [
+  ...examStageCatalog.map((item) => `${item.exam} - ${item.stage}`),
+  ...courses.filter((course) => course.category !== "SSC").map((course) => course.name),
+];
