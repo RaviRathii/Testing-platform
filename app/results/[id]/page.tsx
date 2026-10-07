@@ -33,7 +33,7 @@ type ResultDetail = {
     questionText: string;
     category: string;
     difficulty: string;
-    selectedOption: number;
+    selectedOption: number | null;
     correctOption: number;
     isCorrect: boolean;
     options: string[];
@@ -166,8 +166,8 @@ export default function ResultsDetailPage() {
                   <div key={question.id} className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
                     <div className="flex items-center justify-between gap-3">
                       <p className="text-sm font-semibold uppercase tracking-[0.2em] text-indigo-600">{question.category}</p>
-                      <span className={`rounded-full px-2 py-1 text-[10px] font-bold uppercase tracking-[0.14em] ${question.isCorrect ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-700"}`}>
-                        {question.isCorrect ? "Correct" : "Incorrect"}
+                      <span className={`rounded-full px-2 py-1 text-[10px] font-bold uppercase tracking-[0.14em] ${question.isCorrect ? "bg-emerald-100 text-emerald-700" : question.selectedOption === null ? "bg-slate-200 text-slate-600" : "bg-amber-100 text-amber-700"}`}>
+                        {question.isCorrect ? "Correct" : question.selectedOption === null ? "Skipped" : "Incorrect"}
                       </span>
                     </div>
 

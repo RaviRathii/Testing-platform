@@ -50,26 +50,6 @@ export function QuestionPractice() {
   const hasActiveSubscription =
     user !== null && (user.isAdmin || (subscription.plan && subscription.plan !== "FREE" && subscription.status !== "INACTIVE"));
 
-  const submittedReview = useMemo(
-    () =>
-      questions.map((question) => {
-        const selectedOption = answers[question.id];
-        const isCorrect = selectedOption === question.correctOption;
-
-        return {
-          id: question.id,
-          questionText: question.questionText,
-          category: question.category,
-          options: question.options,
-          selectedOption,
-          correctOption: question.correctOption ?? 0,
-          isCorrect,
-          explanation: question.explanation ?? "No explanation available for this question.",
-        };
-      }),
-    [answers, questions],
-  );
-
   const currentQuestion = questions[currentIndex] ?? null;
   const answeredCount = useMemo(
     () => Object.keys(answers).filter((questionId) => answers[questionId] !== undefined).length,
@@ -415,7 +395,18 @@ export function QuestionPractice() {
           </p>
 
           <div className="mt-5 flex flex-wrap gap-3">
-            <Link href="/profile" className="rounded-full bg-emerald-700 px-4 py-2 text-sm font-semibold text-white">
+            {result.attemptId && (
+              <Link
+                href={`/results/${result.attemptId}`}
+                className="rounded-full bg-emerald-700 px-4 py-2 text-sm font-semibold text-white"
+              >
+                Review answers &amp; explanations
+              </Link>
+            )}
+            <Link
+              href="/profile"
+              className="rounded-full border border-emerald-300 bg-white px-4 py-2 text-sm font-semibold text-emerald-800"
+            >
               View profile results
             </Link>
             <button
@@ -425,35 +416,6 @@ export function QuestionPractice() {
             >
               Retake exam
             </button>
-          </div>
-
-          <div className="mt-8 space-y-4">
-            <h4 className="text-lg font-bold">Wrong answers & explanations</h4>
-            {submittedReview.filter((question) => !question.isCorrect).length === 0 ? (
-              <p className="text-sm">Excellent! You answered every question correctly.</p>
-            ) : (
-              submittedReview
-                .filter((question) => !question.isCorrect)
-                .map((question, index) => {
-                  const selectedLabel = question.selectedOption === undefined ? "Not answered" : question.options[question.selectedOption];
-                  const correctAnswer = question.options[question.correctOption] ?? "No correct option";
-
-                  return (
-                    <div key={question.id} className="rounded-2xl border border-emerald-200 bg-white p-4">
-                      <p className="text-sm font-semibold uppercase tracking-[0.2em] text-slate-500">{question.category}</p>
-                      <p className="mt-2 text-base font-semibold text-slate-900">
-                        {index + 1}. {question.questionText}
-                      </p>
-                      <p className="mt-2 text-sm text-slate-700">Your answer: {selectedLabel}</p>
-                      <p className="text-sm text-slate-700">Correct answer: {correctAnswer}</p>
-                      <div className="mt-3 rounded-xl border border-indigo-100 bg-indigo-50 p-3 text-sm text-indigo-800">
-                        <p className="font-semibold">Explanation</p>
-                        <p className="mt-1">{question.explanation}</p>
-                      </div>
-                    </div>
-                  );
-                })
-            )}
           </div>
         </div>
       )}

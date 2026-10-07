@@ -1,7 +1,8 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { FormEvent, ReactNode, useEffect, useMemo, useState } from "react";
 import { examPresetOptions } from "@/lib/exam-data";
 
 type QuestionRow = {
@@ -38,41 +39,135 @@ type TestRow = {
   createdBy?: string;
 };
 
+type Notice = { tone: "success" | "error"; text: string } | null;
+
+type AdminData = {
+  isAdmin: boolean;
+  questions?: QuestionRow[];
+  users?: UserRow[];
+  tests?: TestRow[];
+};
+
+async function fetchAdminData(): Promise<AdminData> {
+  try {
+    const meResponse = await fetch("/api/auth/me", { cache: "no-store" });
+    const meData = meResponse.ok ? ((await meResponse.json()) as { user?: { isAdmin?: boolean } }) : null;
+
+    if (!meData?.user?.isAdmin) {
+      return { isAdmin: false };
+    }
+
+    const [questionsResponse, usersResponse, testsResponse] = await Promise.all([
+      fetch("/api/admin/questions", { cache: "no-store" }),
+      fetch("/api/admin/users", { cache: "no-store" }),
+      fetch("/api/admin/tests", { cache: "no-store" }),
+    ]);
+
+    return {
+      isAdmin: true,
+      questions: questionsResponse.ok ? ((await questionsResponse.json()) as QuestionRow[]) : undefined,
+      users: usersResponse.ok ? ((await usersResponse.json()) as UserRow[]) : undefined,
+      tests: testsResponse.ok ? ((await testsResponse.json()) as TestRow[]) : undefined,
+    };
+  } catch {
+    return { isAdmin: false };
+  }
+}
+
 const defaultQuestionForm = {
-  category: "CGL General Awareness",
+  category: "",
   difficulty: "MEDIUM",
-  questionText: "Who was the first Governor-General of independent India?",
-  optionA: "C. Rajagopalachari",
-  optionB: "Lord Mountbatten",
-  optionC: "Dr. Rajendra Prasad",
-  optionD: "Jawaharlal Nehru",
-  correctOption: 1,
-  explanation: "Lord Mountbatten served as the first Governor-General of independent India.",
+  questionText: "",
+  optionA: "",
+  optionB: "",
+  optionC: "",
+  optionD: "",
+  correctOption: 0,
+  explanation: "",
 };
 
 const defaultTestForm = {
-  title: "SSC CGL 2025 - Recent Shift Mock Test",
-  examName: "CGL",
-  description: "Recent shift-style mock practice for SSC CGL with aptitude, reasoning, and GK questions.",
+  title: "",
+  examName: "",
+  description: "",
   durationMinutes: 60,
   isPublished: true,
 };
 
 const defaultCsvImportForm = {
-  category: "CGL General Awareness",
+  category: "",
   difficulty: "MEDIUM",
-  title: "SSC CGL CSV Mock Test",
-  examName: "CGL",
+  title: "",
+  examName: "",
   durationMinutes: 60,
   isPublished: true,
 };
 
 const tabs = [
-  { key: "overview", label: "Overview" },
-  { key: "questions", label: "Questions" },
-  { key: "tests", label: "Mock tests" },
-  { key: "users", label: "Users" },
+  { key: "overview", label: "Overview", icon: "M3 12l9-9 9 9M5 10v10h5v-6h4v6h5V10" },
+  { key: "questions", label: "Questions", icon: "M9 9a3 3 0 1 1 4 2.8c-.6.3-1 .9-1 1.6V14m0 3h.01M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" },
+  { key: "tests", label: "Mock tests", icon: "M9 5h10M9 12h10M9 19h10M5 5h.01M5 12h.01M5 19h.01" },
+  { key: "users", label: "Users", icon: "M16 19v-1a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v1m20 0v-1a4 4 0 0 0-3-3.9M15 3.1a4 4 0 0 1 0 7.8M13 7a4 4 0 1 1-8 0 4 4 0 0 1 8 0Z" },
 ] as const;
+
+type TabKey = (typeof tabs)[number]["key"];
+
+const inputClass =
+  "w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20";
+const labelClass = "block space-y-1.5 text-sm font-medium text-slate-700";
+const cardClass = "rounded-2xl border border-slate-200 bg-white shadow-sm";
+
+const difficultyTone: Record<string, string> = {
+  EASY: "bg-emerald-50 text-emerald-700",
+  MEDIUM: "bg-amber-50 text-amber-700",
+  HARD: "bg-rose-50 text-rose-700",
+};
+
+function Icon({ path, className = "h-5 w-5" }: { path: string; className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden>
+      <path d={path} />
+    </svg>
+  );
+}
+
+function NoticeBanner({ notice, onDismiss }: { notice: Notice; onDismiss: () => void }) {
+  if (!notice) {
+    return null;
+  }
+
+  return (
+    <div
+      role={notice.tone === "error" ? "alert" : "status"}
+      className={`flex items-start justify-between gap-3 rounded-xl border px-4 py-3 text-sm ${
+        notice.tone === "success"
+          ? "border-emerald-200 bg-emerald-50 text-emerald-800"
+          : "border-rose-200 bg-rose-50 text-rose-800"
+      }`}
+    >
+      <span>{notice.text}</span>
+      <button type="button" onClick={onDismiss} className="shrink-0 font-semibold opacity-70 hover:opacity-100" aria-label="Dismiss">
+        ×
+      </button>
+    </div>
+  );
+}
+
+function SectionHeader({ title, description, action }: { title: string; description?: string; action?: ReactNode }) {
+  return (
+    <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+      <div>
+        <h1 className="text-2xl font-bold tracking-tight text-slate-900">{title}</h1>
+        {description && <p className="mt-1 text-sm text-slate-500">{description}</p>}
+      </div>
+      {action}
+    </div>
+  );
+}
+
+function Pill({ children, className }: { children: ReactNode; className: string }) {
+  return <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-semibold ${className}`}>{children}</span>;
+}
 
 export default function AdminPage() {
   const router = useRouter();
@@ -83,16 +178,21 @@ export default function AdminPage() {
   const [loading, setLoading] = useState(true);
   const [submittingQuestion, setSubmittingQuestion] = useState(false);
   const [submittingTest, setSubmittingTest] = useState(false);
-  const [questionMessage, setQuestionMessage] = useState("");
-  const [testMessage, setTestMessage] = useState("");
+  const [notice, setNotice] = useState<Notice>(null);
   const [selectedQuestionIds, setSelectedQuestionIds] = useState<string[]>([]);
   const [questionForm, setQuestionForm] = useState(defaultQuestionForm);
   const [testForm, setTestForm] = useState(defaultTestForm);
   const [csvFile, setCsvFile] = useState<File | null>(null);
   const [csvImportForm, setCsvImportForm] = useState(defaultCsvImportForm);
   const [csvImporting, setCsvImporting] = useState(false);
-  const [csvMessage, setCsvMessage] = useState("");
-  const [activeTab, setActiveTab] = useState<(typeof tabs)[number]["key"]>("overview");
+  const [activeTab, setActiveTab] = useState<TabKey>("overview");
+  const [questionPanel, setQuestionPanel] = useState<"none" | "add" | "import">("none");
+  const [showTestBuilder, setShowTestBuilder] = useState(false);
+  const [togglingTestId, setTogglingTestId] = useState<string | null>(null);
+  const [questionSearch, setQuestionSearch] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState("all");
+  const [difficultyFilter, setDifficultyFilter] = useState("all");
+  const [pickerSearch, setPickerSearch] = useState("");
   const [userSearch, setUserSearch] = useState("");
   const [userAccessFilter, setUserAccessFilter] = useState<"all" | "admin" | "user">("all");
 
@@ -101,56 +201,50 @@ export default function AdminPage() {
       totalUsers: users.length,
       totalQuestions: questions.length,
       totalTests: tests.length,
-      activePaidUsers: users.filter((user) => user.subscription?.plan && user.subscription.plan !== "FREE").length,
+      activePaidUsers: users.filter(
+        (user) => user.subscription?.plan && user.subscription.plan !== "FREE" && user.subscription.status === "ACTIVE",
+      ).length,
       publishedTests: tests.filter((test) => test.isPublished).length,
       adminUsers: users.filter((user) => user.isAdmin).length,
     }),
     [questions, tests, users],
   );
 
-  const loadAdminData = async () => {
-    try {
-      const meResponse = await fetch("/api/auth/me", { cache: "no-store" });
-      if (!meResponse.ok) {
-        setIsAdmin(false);
-        return;
-      }
+  const categories = useMemo(() => [...new Set(questions.map((question) => question.category))].sort(), [questions]);
 
-      const meData = (await meResponse.json()) as { user?: { isAdmin?: boolean } };
-      if (!meData.user?.isAdmin) {
-        setIsAdmin(false);
-        return;
-      }
-
-      setIsAdmin(true);
-
-      const [questionsResponse, usersResponse, testsResponse] = await Promise.all([
-        fetch("/api/admin/questions", { cache: "no-store" }),
-        fetch("/api/admin/users", { cache: "no-store" }),
-        fetch("/api/admin/tests", { cache: "no-store" }),
-      ]);
-
-      if (questionsResponse.ok) {
-        setQuestions((await questionsResponse.json()) as QuestionRow[]);
-      }
-
-      if (usersResponse.ok) {
-        setUsers((await usersResponse.json()) as UserRow[]);
-      }
-
-      if (testsResponse.ok) {
-        setTests((await testsResponse.json()) as TestRow[]);
-      }
-    } catch {
-      setIsAdmin(false);
-    } finally {
-      setLoading(false);
-    }
+  const applyAdminData = (data: AdminData) => {
+    setIsAdmin(data.isAdmin);
+    if (data.questions) setQuestions(data.questions);
+    if (data.users) setUsers(data.users);
+    if (data.tests) setTests(data.tests);
+    setLoading(false);
   };
 
+  const loadAdminData = async () => applyAdminData(await fetchAdminData());
+
   useEffect(() => {
-    void loadAdminData();
+    void fetchAdminData().then(applyAdminData);
   }, []);
+
+  const filteredQuestions = useMemo(() => {
+    const searchValue = questionSearch.trim().toLowerCase();
+    return questions.filter(
+      (question) =>
+        (!searchValue || question.questionText.toLowerCase().includes(searchValue)) &&
+        (categoryFilter === "all" || question.category === categoryFilter) &&
+        (difficultyFilter === "all" || question.difficulty === difficultyFilter),
+    );
+  }, [categoryFilter, difficultyFilter, questionSearch, questions]);
+
+  const pickerQuestions = useMemo(() => {
+    const searchValue = pickerSearch.trim().toLowerCase();
+    return questions.filter(
+      (question) =>
+        !searchValue ||
+        question.questionText.toLowerCase().includes(searchValue) ||
+        question.category.toLowerCase().includes(searchValue),
+    );
+  }, [pickerSearch, questions]);
 
   const filteredUsers = useMemo(() => {
     const searchValue = userSearch.trim().toLowerCase();
@@ -170,6 +264,11 @@ export default function AdminPage() {
     });
   }, [userAccessFilter, userSearch, users]);
 
+  const switchTab = (tab: TabKey) => {
+    setActiveTab(tab);
+    setNotice(null);
+  };
+
   const handleLogout = async () => {
     await fetch("/api/auth/logout", { method: "POST" });
     router.push("/login");
@@ -178,7 +277,7 @@ export default function AdminPage() {
   const handleQuestionSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setSubmittingQuestion(true);
-    setQuestionMessage("");
+    setNotice(null);
 
     try {
       const response = await fetch("/api/admin/questions", {
@@ -188,12 +287,7 @@ export default function AdminPage() {
           category: questionForm.category,
           difficulty: questionForm.difficulty,
           questionText: questionForm.questionText,
-          options: [
-            questionForm.optionA,
-            questionForm.optionB,
-            questionForm.optionC,
-            questionForm.optionD,
-          ],
+          options: [questionForm.optionA, questionForm.optionB, questionForm.optionC, questionForm.optionD],
           correctOption: questionForm.correctOption,
           explanation: questionForm.explanation,
           isActive: true,
@@ -205,15 +299,12 @@ export default function AdminPage() {
         throw new Error(data.error ?? "Unable to save the question");
       }
 
-      setQuestionMessage("Question added successfully.");
-      setQuestionForm({
-        ...defaultQuestionForm,
-        category: questionForm.category,
-      });
-      setActiveTab("questions");
+      setNotice({ tone: "success", text: "Question added to the bank." });
+      // Keep the category so several questions in a row are quicker to enter.
+      setQuestionForm({ ...defaultQuestionForm, category: questionForm.category, difficulty: questionForm.difficulty });
       await loadAdminData();
     } catch (error) {
-      setQuestionMessage(error instanceof Error ? error.message : "Unable to save the question.");
+      setNotice({ tone: "error", text: error instanceof Error ? error.message : "Unable to save the question." });
     } finally {
       setSubmittingQuestion(false);
     }
@@ -221,14 +312,14 @@ export default function AdminPage() {
 
   const handleTestSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    setSubmittingTest(true);
-    setTestMessage("");
+    setNotice(null);
 
     if (selectedQuestionIds.length === 0) {
-      setTestMessage("Select at least one question to build the mock test.");
-      setSubmittingTest(false);
+      setNotice({ tone: "error", text: "Select at least one question to build the mock test." });
       return;
     }
+
+    setSubmittingTest(true);
 
     try {
       const response = await fetch("/api/admin/tests", {
@@ -249,13 +340,16 @@ export default function AdminPage() {
         throw new Error(data.error ?? "Unable to create mock test");
       }
 
-      setTestMessage("Mock test created successfully.");
+      setNotice({
+        tone: "success",
+        text: `“${testForm.title}” created with ${selectedQuestionIds.length} questions${testForm.isPublished ? " and published" : " as a draft"}.`,
+      });
       setSelectedQuestionIds([]);
       setTestForm(defaultTestForm);
-      setActiveTab("tests");
+      setShowTestBuilder(false);
       await loadAdminData();
     } catch (error) {
-      setTestMessage(error instanceof Error ? error.message : "Unable to create mock test.");
+      setNotice({ tone: "error", text: error instanceof Error ? error.message : "Unable to create mock test." });
     } finally {
       setSubmittingTest(false);
     }
@@ -264,17 +358,17 @@ export default function AdminPage() {
   const handleCsvImport = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!csvFile) {
-      setCsvMessage("Please choose a CSV file to import.");
+      setNotice({ tone: "error", text: "Choose a CSV file to import." });
       return;
     }
 
     setCsvImporting(true);
-    setCsvMessage("");
+    setNotice(null);
 
     try {
       const formData = new FormData();
       formData.append("file", csvFile);
-      formData.append("category", csvImportForm.category);
+      formData.append("category", csvImportForm.category || "General");
       formData.append("difficulty", csvImportForm.difficulty);
       formData.append("title", csvImportForm.title);
       formData.append("examName", csvImportForm.examName);
@@ -286,570 +380,940 @@ export default function AdminPage() {
         body: formData,
       });
 
-      const data = (await response.json()) as { error?: string; created?: number; test?: { id?: string; title?: string; questionCount?: number } };
+      const data = (await response.json()) as {
+        error?: string;
+        created?: number;
+        skippedRows?: number[];
+        test?: { id?: string; title?: string; questionCount?: number } | null;
+      };
       if (!response.ok) {
         throw new Error(data.error ?? "Unable to import the CSV file.");
       }
 
-      setCsvMessage(
-        data.test
-          ? `Imported ${data.created ?? 0} questions and created “${data.test.title ?? csvImportForm.title}” with ${data.test.questionCount ?? 0} questions.`
-          : `Imported ${data.created ?? 0} questions successfully.`,
-      );
+      const skipped = data.skippedRows?.length
+        ? ` Skipped rows ${data.skippedRows.join(", ")} because the correct option couldn't be read.`
+        : "";
+      setNotice({
+        tone: data.skippedRows?.length ? "error" : "success",
+        text:
+          (data.test
+            ? `Imported ${data.created ?? 0} questions and created “${data.test.title}”.`
+            : `Imported ${data.created ?? 0} questions.`) + skipped,
+      });
       setCsvFile(null);
       setCsvImportForm(defaultCsvImportForm);
-      setActiveTab("questions");
+      setQuestionPanel("none");
       await loadAdminData();
     } catch (error) {
-      setCsvMessage(error instanceof Error ? error.message : "Unable to import CSV questions.");
+      setNotice({ tone: "error", text: error instanceof Error ? error.message : "Unable to import CSV questions." });
     } finally {
       setCsvImporting(false);
     }
   };
 
+  const handleTogglePublish = async (test: TestRow) => {
+    setTogglingTestId(test.id);
+    setNotice(null);
+
+    try {
+      const response = await fetch(`/api/admin/tests/${test.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ isPublished: !test.isPublished }),
+      });
+
+      const data = (await response.json()) as { error?: string; isPublished?: boolean };
+      if (!response.ok) {
+        throw new Error(data.error ?? "Unable to update the test.");
+      }
+
+      setTests((current) =>
+        current.map((item) => (item.id === test.id ? { ...item, isPublished: Boolean(data.isPublished) } : item)),
+      );
+      setNotice({
+        tone: "success",
+        text: `“${test.title}” is now ${data.isPublished ? "published and visible to students" : "a draft, hidden from students"}.`,
+      });
+    } catch (error) {
+      setNotice({ tone: "error", text: error instanceof Error ? error.message : "Unable to update the test." });
+    } finally {
+      setTogglingTestId(null);
+    }
+  };
+
   const toggleQuestionSelection = (questionId: string) => {
     setSelectedQuestionIds((current) =>
-      current.includes(questionId)
-        ? current.filter((item) => item !== questionId)
-        : [...current, questionId],
+      current.includes(questionId) ? current.filter((item) => item !== questionId) : [...current, questionId],
     );
   };
 
   if (loading) {
-    return <main className="min-h-screen bg-slate-100 p-8 text-slate-900">Loading admin dashboard...</main>;
+    return (
+      <main className="flex min-h-screen items-center justify-center text-sm text-slate-500" aria-busy="true">
+        Loading admin dashboard...
+      </main>
+    );
   }
 
   if (!isAdmin) {
     return (
-      <main className="min-h-screen bg-slate-100 p-8 text-slate-900">
-        <div className="mx-auto max-w-xl rounded-3xl border border-dashed border-slate-300 bg-white p-8 text-center">
-          <p className="text-lg font-semibold">Admin access required</p>
-          <a href="/login" className="mt-4 inline-block rounded-full bg-indigo-600 px-4 py-2 text-sm font-semibold text-white">
-            Login as admin
-          </a>
+      <main className="flex min-h-screen items-center justify-center px-4">
+        <div className="max-w-md rounded-3xl border border-slate-200 bg-white p-8 text-center shadow-sm">
+          <p className="text-lg font-semibold text-slate-900">Admin access required</p>
+          <p className="mt-2 text-sm text-slate-600">Log in with an admin account to manage questions, tests, and users.</p>
+          <div className="mt-6 flex justify-center gap-3">
+            <Link href="/login" className="rounded-full bg-indigo-600 px-5 py-2 text-sm font-semibold text-white hover:bg-indigo-500">
+              Log in as admin
+            </Link>
+            <Link href="/" className="rounded-full border border-slate-300 bg-white px-5 py-2 text-sm font-semibold text-slate-700">
+              Go home
+            </Link>
+          </div>
         </div>
       </main>
     );
   }
 
-  const renderOverview = () => (
-    <div className="space-y-8">
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
-        {[
-          { label: "Total users", value: stats.totalUsers, accent: "indigo" },
-          { label: "Questions", value: stats.totalQuestions, accent: "emerald" },
-          { label: "Mock tests", value: stats.totalTests, accent: "amber" },
-          { label: "Paid users", value: stats.activePaidUsers, accent: "violet" },
-          { label: "Admins", value: stats.adminUsers, accent: "sky" },
-        ].map((item) => (
-          <div key={item.label} className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-            <p className="text-sm text-slate-500">{item.label}</p>
-            <p className="mt-2 text-3xl font-bold text-slate-900">{item.value}</p>
-          </div>
-        ))}
-      </div>
+  const tabCounts: Partial<Record<TabKey, number>> = {
+    questions: stats.totalQuestions,
+    tests: stats.totalTests,
+    users: stats.totalUsers,
+  };
 
-      <div className="grid gap-8 lg:grid-cols-2">
-        <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-          <h2 className="text-xl font-semibold">Quick actions</h2>
-          <div className="mt-5 space-y-3">
-            <button type="button" onClick={() => setActiveTab("questions")} className="w-full rounded-2xl border border-slate-200 bg-slate-50 p-4 text-left">
-              <p className="text-sm font-semibold text-slate-900">Add new question</p>
-              <p className="mt-1 text-xs text-slate-500">Create question bank items for SSC, CGL, banking, aptitude, and reasoning.</p>
+  const renderOverview = () => {
+    const statCards = [
+      { label: "Users", value: stats.totalUsers, hint: `${stats.activePaidUsers} on a paid plan`, tab: "users" as TabKey },
+      { label: "Questions", value: stats.totalQuestions, hint: `${categories.length} categories`, tab: "questions" as TabKey },
+      { label: "Mock tests", value: stats.totalTests, hint: `${stats.publishedTests} published`, tab: "tests" as TabKey },
+      { label: "Admins", value: stats.adminUsers, hint: "With full access", tab: "users" as TabKey },
+    ];
+
+    const quickActions = [
+      {
+        title: "Add a question",
+        description: "Write a single question with options and an explanation.",
+        onClick: () => {
+          switchTab("questions");
+          setQuestionPanel("add");
+        },
+      },
+      {
+        title: "Import from CSV",
+        description: "Bulk-upload questions and optionally create a test from them.",
+        onClick: () => {
+          switchTab("questions");
+          setQuestionPanel("import");
+        },
+      },
+      {
+        title: "Build a mock test",
+        description: "Pick questions from the bank and set the timing.",
+        onClick: () => {
+          switchTab("tests");
+          setShowTestBuilder(true);
+        },
+      },
+    ];
+
+    return (
+      <div className="space-y-6">
+        <SectionHeader title="Overview" description="A snapshot of your platform's content and users." />
+
+        <div className="grid grid-cols-2 gap-4 xl:grid-cols-4">
+          {statCards.map((card) => (
+            <button
+              key={card.label}
+              type="button"
+              onClick={() => switchTab(card.tab)}
+              className={`${cardClass} p-5 text-left hover:border-indigo-200 hover:shadow-md`}
+            >
+              <p className="text-sm text-slate-500">{card.label}</p>
+              <p className="mt-1 text-3xl font-bold tracking-tight text-slate-900">{card.value}</p>
+              <p className="mt-1 text-xs text-slate-500">{card.hint}</p>
             </button>
-            <button type="button" onClick={() => setActiveTab("tests")} className="w-full rounded-2xl border border-slate-200 bg-slate-50 p-4 text-left">
-              <p className="text-sm font-semibold text-slate-900">Build mock test</p>
-              <p className="mt-1 text-xs text-slate-500">Assemble a full exam paper by selecting from the question bank.</p>
-            </button>
-            <button type="button" onClick={() => setActiveTab("users")} className="w-full rounded-2xl border border-slate-200 bg-slate-50 p-4 text-left">
-              <p className="text-sm font-semibold text-slate-900">Manage users</p>
-              <p className="mt-1 text-xs text-slate-500">Track registrations, subscription plan status, and access levels.</p>
-            </button>
-          </div>
+          ))}
         </div>
 
-        <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-          <h2 className="text-xl font-semibold">Recent question bank</h2>
-          <div className="mt-5 space-y-3">
-            {questions.slice(0, 4).map((question) => (
-              <div key={question.id} className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-                <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-indigo-600">{question.category}</p>
-                <p className="mt-2 text-sm font-medium text-slate-800">{question.questionText}</p>
-                <p className="mt-1 text-xs text-slate-500">{question.difficulty}</p>
+        <div className="grid gap-4 md:grid-cols-3">
+          {quickActions.map((action) => (
+            <button
+              key={action.title}
+              type="button"
+              onClick={action.onClick}
+              className="group flex items-start justify-between gap-4 rounded-2xl border border-indigo-100 bg-indigo-50/60 p-5 text-left hover:border-indigo-300 hover:bg-indigo-50"
+            >
+              <span>
+                <span className="block font-semibold text-slate-900">{action.title}</span>
+                <span className="mt-1 block text-sm text-slate-600">{action.description}</span>
+              </span>
+              <span className="text-indigo-500 transition group-hover:translate-x-0.5" aria-hidden>
+                →
+              </span>
+            </button>
+          ))}
+        </div>
+
+        <div className="grid gap-6 lg:grid-cols-2">
+          <section className={`${cardClass} min-w-0 p-5`}>
+            <div className="flex items-center justify-between">
+              <h2 className="font-semibold text-slate-900">Recent mock tests</h2>
+              <button type="button" onClick={() => switchTab("tests")} className="text-sm font-semibold text-indigo-700 hover:text-indigo-500">
+                View all
+              </button>
+            </div>
+            <ul className="mt-3 divide-y divide-slate-100">
+              {tests.slice(0, 5).map((test) => (
+                <li key={test.id} className="flex items-center justify-between gap-3 py-3">
+                  <span className="min-w-0">
+                    <span className="block truncate text-sm font-medium text-slate-900">{test.title}</span>
+                    <span className="block text-xs text-slate-500">
+                      {test.examName} · {test.questionCount} questions · {test.durationMinutes} min
+                    </span>
+                  </span>
+                  <Pill className={test.isPublished ? "bg-emerald-50 text-emerald-700" : "bg-slate-100 text-slate-600"}>
+                    {test.isPublished ? "Published" : "Draft"}
+                  </Pill>
+                </li>
+              ))}
+              {tests.length === 0 && <li className="py-3 text-sm text-slate-500">No mock tests yet.</li>}
+            </ul>
+          </section>
+
+          <section className={`${cardClass} min-w-0 p-5`}>
+            <div className="flex items-center justify-between">
+              <h2 className="font-semibold text-slate-900">Latest questions</h2>
+              <button type="button" onClick={() => switchTab("questions")} className="text-sm font-semibold text-indigo-700 hover:text-indigo-500">
+                View all
+              </button>
+            </div>
+            <ul className="mt-3 divide-y divide-slate-100">
+              {questions.slice(0, 5).map((question) => (
+                <li key={question.id} className="py-3">
+                  <p className="truncate text-sm font-medium text-slate-900">{question.questionText}</p>
+                  <p className="mt-0.5 text-xs text-slate-500">
+                    {question.category} · {question.difficulty.charAt(0) + question.difficulty.slice(1).toLowerCase()}
+                  </p>
+                </li>
+              ))}
+              {questions.length === 0 && <li className="py-3 text-sm text-slate-500">No questions yet.</li>}
+            </ul>
+          </section>
+        </div>
+      </div>
+    );
+  };
+
+  const renderQuestionForm = () => (
+    <form onSubmit={handleQuestionSubmit} className={`${cardClass} space-y-5 p-6`}>
+      <div className="flex items-center justify-between">
+        <h2 className="font-semibold text-slate-900">New question</h2>
+        <button type="button" onClick={() => setQuestionPanel("none")} className="text-sm text-slate-500 hover:text-slate-900">
+          Cancel
+        </button>
+      </div>
+
+      <div className="grid gap-4 sm:grid-cols-2">
+        <label className={labelClass}>
+          Category
+          <input
+            required
+            minLength={2}
+            list="question-categories"
+            value={questionForm.category}
+            onChange={(event) => setQuestionForm({ ...questionForm, category: event.target.value })}
+            placeholder="e.g. Quantitative Aptitude"
+            className={inputClass}
+          />
+        </label>
+        <label className={labelClass}>
+          Difficulty
+          <select
+            value={questionForm.difficulty}
+            onChange={(event) => setQuestionForm({ ...questionForm, difficulty: event.target.value })}
+            className={inputClass}
+          >
+            <option value="EASY">Easy</option>
+            <option value="MEDIUM">Medium</option>
+            <option value="HARD">Hard</option>
+          </select>
+        </label>
+      </div>
+
+      <label className={labelClass}>
+        Question
+        <textarea
+          required
+          minLength={10}
+          value={questionForm.questionText}
+          onChange={(event) => setQuestionForm({ ...questionForm, questionText: event.target.value })}
+          placeholder="Type the question"
+          className={inputClass}
+          rows={3}
+        />
+      </label>
+
+      <fieldset>
+        <legend className="text-sm font-medium text-slate-700">Options — select the correct answer</legend>
+        <div className="mt-2 grid gap-3 sm:grid-cols-2">
+          {(["optionA", "optionB", "optionC", "optionD"] as const).map((key, index) => {
+            const isCorrect = questionForm.correctOption === index;
+            return (
+              <div
+                key={key}
+                className={`flex items-center gap-2 rounded-xl border p-1.5 pl-3 ${
+                  isCorrect ? "border-emerald-300 bg-emerald-50" : "border-slate-300 bg-white"
+                }`}
+              >
+                <input
+                  type="radio"
+                  name="correctOption"
+                  checked={isCorrect}
+                  onChange={() => setQuestionForm({ ...questionForm, correctOption: index })}
+                  aria-label={`Option ${String.fromCharCode(65 + index)} is correct`}
+                  className="accent-emerald-600"
+                />
+                <span className="text-sm font-semibold text-slate-500">{String.fromCharCode(65 + index)}</span>
+                <input
+                  required
+                  value={questionForm[key]}
+                  onChange={(event) => setQuestionForm({ ...questionForm, [key]: event.target.value })}
+                  placeholder={`Option ${String.fromCharCode(65 + index)}`}
+                  className="min-w-0 flex-1 rounded-lg bg-transparent px-2 py-1.5 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none"
+                />
               </div>
-            ))}
-            {questions.length === 0 ? <p className="text-sm text-slate-500">No questions added yet.</p> : null}
-          </div>
+            );
+          })}
+        </div>
+      </fieldset>
+
+      <label className={labelClass}>
+        Explanation <span className="font-normal text-slate-400">(shown after the test)</span>
+        <textarea
+          value={questionForm.explanation}
+          onChange={(event) => setQuestionForm({ ...questionForm, explanation: event.target.value })}
+          placeholder="Why is this the correct answer?"
+          className={inputClass}
+          rows={2}
+        />
+      </label>
+
+      <button
+        type="submit"
+        disabled={submittingQuestion}
+        className="rounded-full bg-indigo-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-indigo-500 disabled:opacity-60"
+      >
+        {submittingQuestion ? "Saving..." : "Add question"}
+      </button>
+    </form>
+  );
+
+  const renderCsvImport = () => (
+    <form onSubmit={handleCsvImport} className={`${cardClass} space-y-5 p-6`}>
+      <div className="flex items-center justify-between">
+        <h2 className="font-semibold text-slate-900">Import questions from CSV</h2>
+        <button type="button" onClick={() => setQuestionPanel("none")} className="text-sm text-slate-500 hover:text-slate-900">
+          Cancel
+        </button>
+      </div>
+
+      <label className="flex cursor-pointer flex-col items-center justify-center gap-1 rounded-2xl border-2 border-dashed border-slate-300 bg-slate-50 px-4 py-8 text-center hover:border-indigo-300 hover:bg-indigo-50/40">
+        <span className="text-sm font-semibold text-slate-800">{csvFile ? csvFile.name : "Choose a CSV file"}</span>
+        <span className="text-xs text-slate-500">
+          {csvFile ? `${(csvFile.size / 1024).toFixed(1)} KB · click to change` : "Click to browse"}
+        </span>
+        <input type="file" accept=".csv" onChange={(event) => setCsvFile(event.target.files?.[0] ?? null)} className="sr-only" />
+      </label>
+
+      <div className="rounded-xl bg-slate-50 p-4 text-xs leading-5 text-slate-600">
+        <p>
+          <span className="font-semibold text-slate-800">Required columns:</span> questionText, optionA, optionB, optionC,
+          optionD, correctOption
+        </p>
+        <p>
+          <span className="font-semibold text-slate-800">Optional:</span> category, difficulty, explanation
+        </p>
+        <p className="mt-1">correctOption can be a letter (A–D), a number (1–4), or the exact answer text.</p>
+      </div>
+
+      <div className="grid gap-4 sm:grid-cols-2">
+        <label className={labelClass}>
+          Default category
+          <input
+            list="question-categories"
+            value={csvImportForm.category}
+            onChange={(event) => setCsvImportForm({ ...csvImportForm, category: event.target.value })}
+            placeholder="Used when a row has none"
+            className={inputClass}
+          />
+        </label>
+        <label className={labelClass}>
+          Default difficulty
+          <select
+            value={csvImportForm.difficulty}
+            onChange={(event) => setCsvImportForm({ ...csvImportForm, difficulty: event.target.value })}
+            className={inputClass}
+          >
+            <option value="EASY">Easy</option>
+            <option value="MEDIUM">Medium</option>
+            <option value="HARD">Hard</option>
+          </select>
+        </label>
+      </div>
+
+      <div className="space-y-4 rounded-xl border border-slate-200 p-4">
+        <p className="text-sm font-medium text-slate-700">
+          Also create a mock test <span className="font-normal text-slate-400">(leave the title empty to skip)</span>
+        </p>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <label className={labelClass}>
+            Test title
+            <input
+              value={csvImportForm.title}
+              onChange={(event) => setCsvImportForm({ ...csvImportForm, title: event.target.value })}
+              placeholder="e.g. SSC CGL Mock 1"
+              className={inputClass}
+            />
+          </label>
+          <label className={labelClass}>
+            Exam name
+            <input
+              list="exam-presets"
+              value={csvImportForm.examName}
+              onChange={(event) => setCsvImportForm({ ...csvImportForm, examName: event.target.value })}
+              placeholder="e.g. SSC CGL - Tier 1"
+              className={inputClass}
+            />
+          </label>
+          <label className={labelClass}>
+            Duration (minutes)
+            <input
+              type="number"
+              min={1}
+              max={300}
+              value={csvImportForm.durationMinutes}
+              onChange={(event) => setCsvImportForm({ ...csvImportForm, durationMinutes: Number(event.target.value) })}
+              className={inputClass}
+            />
+          </label>
+          <label className="flex items-center gap-3 self-end rounded-xl border border-slate-200 px-3 py-2.5 text-sm font-medium text-slate-700">
+            <input
+              type="checkbox"
+              checked={csvImportForm.isPublished}
+              onChange={(event) => setCsvImportForm({ ...csvImportForm, isPublished: event.target.checked })}
+              className="accent-indigo-600"
+            />
+            Publish immediately
+          </label>
         </div>
       </div>
-    </div>
+
+      <button
+        type="submit"
+        disabled={csvImporting || !csvFile}
+        className="rounded-full bg-indigo-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-indigo-500 disabled:cursor-not-allowed disabled:opacity-60"
+      >
+        {csvImporting ? "Importing..." : "Import questions"}
+      </button>
+    </form>
   );
 
   const renderQuestions = () => (
-    <div className="grid gap-8 xl:grid-cols-[1.05fr_0.95fr]">
-      <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-        <h2 className="text-xl font-semibold">Add a question</h2>
-        <form onSubmit={handleQuestionSubmit} className="mt-6 space-y-5">
-          <div className="grid gap-4 sm:grid-cols-2">
-            <label className="space-y-2 text-sm font-medium text-slate-700">
-              Category
-              <input
-                value={questionForm.category}
-                onChange={(event) => setQuestionForm({ ...questionForm, category: event.target.value })}
-                className="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2.5"
-              />
-            </label>
-            <label className="space-y-2 text-sm font-medium text-slate-700">
-              Difficulty
-              <select
-                value={questionForm.difficulty}
-                onChange={(event) => setQuestionForm({ ...questionForm, difficulty: event.target.value })}
-                className="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2.5"
-              >
-                <option value="EASY">EASY</option>
-                <option value="MEDIUM">MEDIUM</option>
-                <option value="HARD">HARD</option>
-              </select>
-            </label>
-          </div>
-
-          <label className="block space-y-2 text-sm font-medium text-slate-700">
-            Question
-            <textarea
-              value={questionForm.questionText}
-              onChange={(event) => setQuestionForm({ ...questionForm, questionText: event.target.value })}
-              className="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2.5"
-              rows={3}
-            />
-          </label>
-
-          <div className="grid gap-4 sm:grid-cols-2">
-            {[
-              ["optionA", "Option A"],
-              ["optionB", "Option B"],
-              ["optionC", "Option C"],
-              ["optionD", "Option D"],
-            ].map(([key, label]) => (
-              <label key={key} className="space-y-2 text-sm font-medium text-slate-700">
-                {label}
-                <input
-                  value={questionForm[key as keyof typeof questionForm] as string}
-                  onChange={(event) => setQuestionForm({ ...questionForm, [key]: event.target.value })}
-                  className="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2.5"
-                />
-              </label>
-            ))}
-          </div>
-
-          <label className="block space-y-2 text-sm font-medium text-slate-700">
-            Correct option
-            <select
-              value={questionForm.correctOption}
-              onChange={(event) => setQuestionForm({ ...questionForm, correctOption: Number(event.target.value) })}
-              className="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2.5"
-            >
-              <option value={0}>Option A</option>
-              <option value={1}>Option B</option>
-              <option value={2}>Option C</option>
-              <option value={3}>Option D</option>
-            </select>
-          </label>
-
-          <label className="block space-y-2 text-sm font-medium text-slate-700">
-            Explanation
-            <textarea
-              value={questionForm.explanation}
-              onChange={(event) => setQuestionForm({ ...questionForm, explanation: event.target.value })}
-              className="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2.5"
-              rows={3}
-            />
-          </label>
-
-          {questionMessage ? <p className="text-sm font-medium text-emerald-700">{questionMessage}</p> : null}
-
-          <button
-            type="submit"
-            disabled={submittingQuestion}
-            className="rounded-full bg-slate-900 px-5 py-3 text-sm font-semibold text-white disabled:opacity-60"
-          >
-            {submittingQuestion ? "Saving question..." : "Add question"}
-          </button>
-        </form>
-      </div>
-
-      <div className="space-y-6">
-        <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-          <div className="flex items-center justify-between gap-3">
-            <h2 className="text-xl font-semibold">Upload CSV questions</h2>
-            <span className="rounded-full bg-indigo-100 px-2 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-indigo-700">Bulk import</span>
-          </div>
-
-          <form onSubmit={handleCsvImport} className="mt-5 space-y-5">
-            <div className="grid gap-4 sm:grid-cols-2">
-              <label className="space-y-2 text-sm font-medium text-slate-700">
-                Default category
-                <input
-                  value={csvImportForm.category}
-                  onChange={(event) => setCsvImportForm({ ...csvImportForm, category: event.target.value })}
-                  className="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2.5"
-                />
-              </label>
-              <label className="space-y-2 text-sm font-medium text-slate-700">
-                Default difficulty
-                <select
-                  value={csvImportForm.difficulty}
-                  onChange={(event) => setCsvImportForm({ ...csvImportForm, difficulty: event.target.value })}
-                  className="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2.5"
-                >
-                  <option value="EASY">EASY</option>
-                  <option value="MEDIUM">MEDIUM</option>
-                  <option value="HARD">HARD</option>
-                </select>
-              </label>
-            </div>
-
-            <div className="grid gap-4 sm:grid-cols-2">
-              <label className="space-y-2 text-sm font-medium text-slate-700">
-                Mock test title
-                <input
-                  value={csvImportForm.title}
-                  onChange={(event) => setCsvImportForm({ ...csvImportForm, title: event.target.value })}
-                  className="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2.5"
-                />
-              </label>
-              <label className="space-y-2 text-sm font-medium text-slate-700">
-                Exam name
-                <input
-                  list="exam-presets"
-                  value={csvImportForm.examName}
-                  onChange={(event) => setCsvImportForm({ ...csvImportForm, examName: event.target.value })}
-                  className="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2.5"
-                />
-                <datalist id="exam-presets">
-                  {examPresetOptions.map((option) => (
-                    <option key={option} value={option} />
-                  ))}
-                </datalist>
-              </label>
-            </div>
-
-            <div className="grid gap-4 sm:grid-cols-2">
-              <label className="space-y-2 text-sm font-medium text-slate-700">
-                Duration (minutes)
-                <input
-                  type="number"
-                  min={15}
-                  max={300}
-                  value={csvImportForm.durationMinutes}
-                  onChange={(event) => setCsvImportForm({ ...csvImportForm, durationMinutes: Number(event.target.value) })}
-                  className="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2.5"
-                />
-              </label>
-              <label className="flex items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 p-3 text-sm font-medium text-slate-700">
-                <input
-                  type="checkbox"
-                  checked={csvImportForm.isPublished}
-                  onChange={(event) => setCsvImportForm({ ...csvImportForm, isPublished: event.target.checked })}
-                />
-                Publish immediately
-              </label>
-            </div>
-
-            <label className="block space-y-2 text-sm font-medium text-slate-700">
-              Select CSV file
-              <input
-                type="file"
-                accept=".csv"
-                onChange={(event) => setCsvFile(event.target.files?.[0] ?? null)}
-                className="block w-full rounded-xl border border-dashed border-slate-300 bg-slate-50 p-3 text-sm text-slate-600"
-              />
-            </label>
-
-            <div className="rounded-2xl border border-indigo-100 bg-indigo-50 p-4 text-xs text-indigo-700">
-              Required columns: <span className="font-semibold">questionText, optionA, optionB, optionC, optionD, correctOption</span>
-              <br />
-              Optional: <span className="font-semibold">category, difficulty, explanation</span>
-            </div>
-
-            {csvMessage ? <p className="text-sm font-medium text-emerald-700">{csvMessage}</p> : null}
-
+    <div className="space-y-6">
+      <SectionHeader
+        title="Question bank"
+        description={`${stats.totalQuestions} questions across ${categories.length} categories.`}
+        action={
+          <div className="flex gap-2">
             <button
-              type="submit"
-              disabled={csvImporting || !csvFile}
-              className="rounded-full bg-indigo-600 px-5 py-3 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60"
+              type="button"
+              onClick={() => setQuestionPanel(questionPanel === "import" ? "none" : "import")}
+              className="rounded-full border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:border-slate-400"
             >
-              {csvImporting ? "Importing questions..." : "Import CSV questions"}
+              Import CSV
             </button>
-          </form>
+            <button
+              type="button"
+              onClick={() => setQuestionPanel(questionPanel === "add" ? "none" : "add")}
+              className="rounded-full bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-500"
+            >
+              Add question
+            </button>
+          </div>
+        }
+      />
+
+      {questionPanel === "add" && renderQuestionForm()}
+      {questionPanel === "import" && renderCsvImport()}
+
+      <section className={cardClass}>
+        <div className="flex flex-col gap-2 border-b border-slate-200 p-4 sm:flex-row">
+          <input
+            type="search"
+            value={questionSearch}
+            onChange={(event) => setQuestionSearch(event.target.value)}
+            placeholder="Search questions"
+            aria-label="Search questions"
+            className={`${inputClass} sm:max-w-xs`}
+          />
+          <select value={categoryFilter} onChange={(event) => setCategoryFilter(event.target.value)} aria-label="Filter by category" className={`${inputClass} sm:w-56`}>
+            <option value="all">All categories</option>
+            {categories.map((category) => (
+              <option key={category} value={category}>
+                {category}
+              </option>
+            ))}
+          </select>
+          <select value={difficultyFilter} onChange={(event) => setDifficultyFilter(event.target.value)} aria-label="Filter by difficulty" className={`${inputClass} sm:w-40`}>
+            <option value="all">All difficulties</option>
+            <option value="EASY">Easy</option>
+            <option value="MEDIUM">Medium</option>
+            <option value="HARD">Hard</option>
+          </select>
+          <span className="self-center whitespace-nowrap text-xs text-slate-500 sm:ml-auto">
+            {filteredQuestions.length} of {questions.length}
+          </span>
         </div>
 
-        <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-          <h2 className="text-xl font-semibold">Question bank</h2>
-          <div className="mt-5 space-y-3">
-            {questions.length === 0 ? (
-              <p className="text-sm text-slate-500">No questions available yet.</p>
-            ) : (
-              questions.slice(0, 8).map((question) => (
-                <div key={question.id} className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-                  <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-indigo-600">{question.category}</p>
-                  <p className="mt-2 text-sm font-medium text-slate-800">{question.questionText}</p>
-                  <p className="mt-2 text-xs text-slate-500">{question.difficulty}</p>
-                </div>
-              ))
-            )}
-          </div>
+        <div className="overflow-x-auto">
+          <table className="min-w-full text-left text-sm">
+            <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
+              <tr>
+                <th className="px-4 py-3 font-semibold">Question</th>
+                <th className="px-4 py-3 font-semibold">Category</th>
+                <th className="px-4 py-3 font-semibold">Difficulty</th>
+                <th className="px-4 py-3 font-semibold">Answer</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {filteredQuestions.length === 0 ? (
+                <tr>
+                  <td colSpan={4} className="px-4 py-10 text-center text-slate-500">
+                    {questions.length === 0 ? "No questions yet. Add one or import a CSV." : "No questions match these filters."}
+                  </td>
+                </tr>
+              ) : (
+                filteredQuestions.map((question) => (
+                  <tr key={question.id} className="align-top hover:bg-slate-50">
+                    <td className="max-w-md px-4 py-3">
+                      <p className="line-clamp-2 font-medium text-slate-900">{question.questionText}</p>
+                    </td>
+                    <td className="whitespace-nowrap px-4 py-3 text-slate-600">{question.category}</td>
+                    <td className="px-4 py-3">
+                      <Pill className={difficultyTone[question.difficulty] ?? "bg-slate-100 text-slate-600"}>
+                        {question.difficulty.charAt(0) + question.difficulty.slice(1).toLowerCase()}
+                      </Pill>
+                    </td>
+                    <td className="max-w-48 px-4 py-3 text-slate-600">
+                      <span className="mr-1.5 font-semibold text-emerald-700">{String.fromCharCode(65 + question.correctOption)}</span>
+                      <span className="line-clamp-1">{question.options[question.correctOption]}</span>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
         </div>
-      </div>
+      </section>
     </div>
   );
 
-  const renderTests = () => (
-    <div className="grid gap-8 xl:grid-cols-[1.05fr_0.95fr]">
-      <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-        <h2 className="text-xl font-semibold">Create mock test</h2>
-        <form onSubmit={handleTestSubmit} className="mt-6 space-y-5">
-          <div className="grid gap-4 sm:grid-cols-2">
-            <label className="space-y-2 text-sm font-medium text-slate-700">
-              Test title
-              <input
-                value={testForm.title}
-                onChange={(event) => setTestForm({ ...testForm, title: event.target.value })}
-                className="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2.5"
-              />
-            </label>
-            <label className="space-y-2 text-sm font-medium text-slate-700">
-              Exam name
-              <input
-                list="exam-presets"
-                value={testForm.examName}
-                onChange={(event) => setTestForm({ ...testForm, examName: event.target.value })}
-                className="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2.5"
-              />
-              <datalist id="exam-presets">
-                {examPresetOptions.map((option) => (
-                  <option key={option} value={option} />
-                ))}
-              </datalist>
-            </label>
-          </div>
+  const renderTestBuilder = () => (
+    <form onSubmit={handleTestSubmit} className={`${cardClass} p-6`}>
+      <div className="flex items-center justify-between">
+        <h2 className="font-semibold text-slate-900">New mock test</h2>
+        <button type="button" onClick={() => setShowTestBuilder(false)} className="text-sm text-slate-500 hover:text-slate-900">
+          Cancel
+        </button>
+      </div>
 
-          <label className="block space-y-2 text-sm font-medium text-slate-700">
-            Description
+      <div className="mt-5 grid gap-6 xl:grid-cols-[1fr_1.2fr]">
+        <div className="space-y-4">
+          <label className={labelClass}>
+            Test title
+            <input
+              required
+              minLength={3}
+              value={testForm.title}
+              onChange={(event) => setTestForm({ ...testForm, title: event.target.value })}
+              placeholder="e.g. SSC CGL Tier 1 — Full Mock 3"
+              className={inputClass}
+            />
+          </label>
+          <label className={labelClass}>
+            Exam name
+            <input
+              required
+              minLength={2}
+              list="exam-presets"
+              value={testForm.examName}
+              onChange={(event) => setTestForm({ ...testForm, examName: event.target.value })}
+              placeholder="e.g. SSC CGL - Tier 1"
+              className={inputClass}
+            />
+          </label>
+          <label className={labelClass}>
+            Description <span className="font-normal text-slate-400">(optional)</span>
             <textarea
               value={testForm.description}
               onChange={(event) => setTestForm({ ...testForm, description: event.target.value })}
-              className="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2.5"
+              placeholder="What this test covers"
+              className={inputClass}
               rows={3}
             />
           </label>
-
-          <div className="grid gap-4 sm:grid-cols-2">
-            <label className="space-y-2 text-sm font-medium text-slate-700">
+          <div className="grid grid-cols-2 gap-4">
+            <label className={labelClass}>
               Duration (minutes)
               <input
                 type="number"
-                min={15}
+                min={1}
                 max={300}
                 value={testForm.durationMinutes}
                 onChange={(event) => setTestForm({ ...testForm, durationMinutes: Number(event.target.value) })}
-                className="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2.5"
+                className={inputClass}
               />
             </label>
-            <label className="flex items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 p-3 text-sm font-medium text-slate-700">
+            <label className="flex items-center gap-3 self-end rounded-xl border border-slate-200 px-3 py-2.5 text-sm font-medium text-slate-700">
               <input
                 type="checkbox"
                 checked={testForm.isPublished}
                 onChange={(event) => setTestForm({ ...testForm, isPublished: event.target.checked })}
+                className="accent-indigo-600"
               />
-              Publish immediately
+              Publish now
             </label>
           </div>
+        </div>
 
-          <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-            <div className="mb-3 flex items-center justify-between">
-              <p className="text-sm font-semibold uppercase tracking-[0.2em] text-slate-600">Select questions</p>
-              <span className="text-xs text-slate-500">{selectedQuestionIds.length} chosen</span>
-            </div>
-
-            <div className="max-h-80 space-y-3 overflow-y-auto pr-1">
-              {questions.length === 0 ? (
-                <p className="text-sm text-slate-500">No questions available yet.</p>
-              ) : (
-                questions.map((question) => (
-                  <label key={question.id} className="flex cursor-pointer items-start gap-3 rounded-xl border border-slate-200 bg-white p-3">
-                    <input
-                      type="checkbox"
-                      checked={selectedQuestionIds.includes(question.id)}
-                      onChange={() => toggleQuestionSelection(question.id)}
-                      className="mt-1"
-                    />
-                    <div className="min-w-0 flex-1">
-                      <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-indigo-600">{question.category}</p>
-                      <p className="mt-1 text-sm font-medium text-slate-800">{question.questionText}</p>
-                      <p className="mt-1 text-xs text-slate-500">{question.difficulty}</p>
-                    </div>
-                  </label>
-                ))
-              )}
-            </div>
+        <div className="flex min-h-0 flex-col rounded-xl border border-slate-200">
+          <div className="flex flex-wrap items-center gap-2 border-b border-slate-200 p-3">
+            <input
+              type="search"
+              value={pickerSearch}
+              onChange={(event) => setPickerSearch(event.target.value)}
+              placeholder="Search by text or category"
+              aria-label="Search questions to add"
+              className={`${inputClass} min-w-0 flex-1 py-2`}
+            />
+            <button
+              type="button"
+              onClick={() =>
+                setSelectedQuestionIds((current) => [
+                  ...current,
+                  ...pickerQuestions.map((question) => question.id).filter((id) => !current.includes(id)),
+                ])
+              }
+              className="text-xs font-semibold text-indigo-700 hover:text-indigo-500"
+            >
+              Select shown
+            </button>
+            <button
+              type="button"
+              onClick={() => setSelectedQuestionIds([])}
+              disabled={selectedQuestionIds.length === 0}
+              className="text-xs font-semibold text-slate-500 hover:text-slate-900 disabled:opacity-40"
+            >
+              Clear
+            </button>
           </div>
-
-          {testMessage ? <p className="text-sm font-medium text-emerald-700">{testMessage}</p> : null}
-
-          <button
-            type="submit"
-            disabled={submittingTest}
-            className="rounded-full bg-indigo-600 px-5 py-3 text-sm font-semibold text-white disabled:opacity-60"
-          >
-            {submittingTest ? "Creating test..." : "Create mock test"}
-          </button>
-        </form>
-      </div>
-
-      <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-        <h2 className="text-xl font-semibold">Published mock tests</h2>
-        <div className="mt-5 space-y-3">
-          {tests.length === 0 ? (
-            <p className="text-sm text-slate-500">No mock tests created yet.</p>
-          ) : (
-            tests.slice(0, 6).map((test) => (
-              <div key={test.id} className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-                <div className="flex items-center justify-between gap-3">
-                  <p className="font-medium text-slate-900">{test.title}</p>
-                  <span className="rounded-full bg-amber-100 px-2 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-amber-700">
-                    {test.isPublished ? "Published" : "Draft"}
-                  </span>
-                </div>
-                <p className="mt-2 text-sm text-slate-600">{test.examName}</p>
-                <p className="mt-1 text-xs text-slate-500">{test.questionCount} questions • {test.durationMinutes} mins</p>
-              </div>
-            ))
-          )}
+          <ul className="max-h-80 divide-y divide-slate-100 overflow-y-auto">
+            {pickerQuestions.length === 0 ? (
+              <li className="p-4 text-sm text-slate-500">No questions found.</li>
+            ) : (
+              pickerQuestions.map((question) => {
+                const order = selectedQuestionIds.indexOf(question.id);
+                return (
+                  <li key={question.id}>
+                    <label className={`flex cursor-pointer items-start gap-3 px-3 py-2.5 ${order >= 0 ? "bg-indigo-50/60" : "hover:bg-slate-50"}`}>
+                      <input
+                        type="checkbox"
+                        checked={order >= 0}
+                        onChange={() => toggleQuestionSelection(question.id)}
+                        className="mt-1 accent-indigo-600"
+                      />
+                      <span className="min-w-0 flex-1">
+                        <span className="line-clamp-2 text-sm text-slate-900">{question.questionText}</span>
+                        <span className="text-xs text-slate-500">
+                          {question.category} · {question.difficulty.charAt(0) + question.difficulty.slice(1).toLowerCase()}
+                        </span>
+                      </span>
+                      {order >= 0 && (
+                        <span className="rounded-full bg-indigo-600 px-1.5 text-xs font-semibold text-white" title="Position in the test">
+                          {order + 1}
+                        </span>
+                      )}
+                    </label>
+                  </li>
+                );
+              })
+            )}
+          </ul>
+          <p className="border-t border-slate-200 px-3 py-2 text-xs text-slate-500">
+            {selectedQuestionIds.length} selected · questions appear in the order you pick them
+          </p>
         </div>
       </div>
-    </div>
+
+      <button
+        type="submit"
+        disabled={submittingTest}
+        className="mt-6 rounded-full bg-indigo-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-indigo-500 disabled:opacity-60"
+      >
+        {submittingTest ? "Creating..." : `Create test${selectedQuestionIds.length ? ` with ${selectedQuestionIds.length} questions` : ""}`}
+      </button>
+    </form>
   );
 
-  const renderUsers = () => (
-    <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-        <h2 className="text-xl font-semibold">User management</h2>
-        <div className="flex flex-col gap-2 sm:flex-row">
-          <input
-            value={userSearch}
-            onChange={(event) => setUserSearch(event.target.value)}
-            placeholder="Search users"
-            className="rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 text-sm outline-none focus:border-indigo-500"
-          />
-          <select
-            value={userAccessFilter}
-            onChange={(event) => setUserAccessFilter(event.target.value as "all" | "admin" | "user")}
-            className="rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 text-sm outline-none focus:border-indigo-500"
-          >
-            <option value="all">All access</option>
-            <option value="admin">Admins</option>
-            <option value="user">Users</option>
-          </select>
-        </div>
-      </div>
+  const renderTests = () => (
+    <div className="space-y-6">
+      <SectionHeader
+        title="Mock tests"
+        description={`${stats.publishedTests} of ${stats.totalTests} published. Drafts are hidden from students.`}
+        action={
+          !showTestBuilder && (
+            <button
+              type="button"
+              onClick={() => setShowTestBuilder(true)}
+              className="rounded-full bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-500"
+            >
+              New mock test
+            </button>
+          )
+        }
+      />
 
-      <div className="mt-5 overflow-hidden rounded-2xl border border-slate-200">
+      {showTestBuilder && renderTestBuilder()}
+
+      <section className={`${cardClass} overflow-x-auto`}>
         <table className="min-w-full text-left text-sm">
-          <thead className="bg-slate-50 text-slate-600">
+          <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
             <tr>
-              <th className="px-4 py-3 font-semibold">Name</th>
-              <th className="px-4 py-3 font-semibold">Email</th>
-              <th className="px-4 py-3 font-semibold">Plan</th>
+              <th className="px-4 py-3 font-semibold">Test</th>
+              <th className="px-4 py-3 font-semibold">Questions</th>
+              <th className="px-4 py-3 font-semibold">Duration</th>
               <th className="px-4 py-3 font-semibold">Status</th>
-              <th className="px-4 py-3 font-semibold">Access</th>
+              <th className="px-4 py-3 text-right font-semibold">Actions</th>
             </tr>
           </thead>
-          <tbody>
-            {filteredUsers.length === 0 ? (
+          <tbody className="divide-y divide-slate-100">
+            {tests.length === 0 ? (
               <tr>
-                <td colSpan={5} className="px-4 py-8 text-center text-slate-500">
-                  {users.length === 0 ? "No users yet." : "No matching users found."}
+                <td colSpan={5} className="px-4 py-10 text-center text-slate-500">
+                  No mock tests yet. Create one from the question bank.
                 </td>
               </tr>
             ) : (
-              filteredUsers.map((user) => (
-                <tr key={user.id} className="border-t border-slate-200">
-                  <td className="px-4 py-3 font-medium text-slate-900">{user.name}</td>
-                  <td className="px-4 py-3 text-slate-600">{user.email}</td>
-                  <td className="px-4 py-3 text-slate-600">{user.subscription?.plan ?? "FREE"}</td>
+              tests.map((test) => (
+                <tr key={test.id} className="hover:bg-slate-50">
                   <td className="px-4 py-3">
-                    <span
-                      className={`rounded-full px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] ${
-                        user.subscription?.status === "ACTIVE"
-                          ? "bg-emerald-100 text-emerald-700"
-                          : "bg-slate-200 text-slate-600"
+                    <p className="font-medium text-slate-900">{test.title}</p>
+                    <p className="text-xs text-slate-500">{test.examName}</p>
+                  </td>
+                  <td className="px-4 py-3 text-slate-600">{test.questionCount}</td>
+                  <td className="whitespace-nowrap px-4 py-3 text-slate-600">{test.durationMinutes} min</td>
+                  <td className="px-4 py-3">
+                    <Pill className={test.isPublished ? "bg-emerald-50 text-emerald-700" : "bg-slate-100 text-slate-600"}>
+                      {test.isPublished ? "Published" : "Draft"}
+                    </Pill>
+                  </td>
+                  <td className="whitespace-nowrap px-4 py-3 text-right">
+                    <Link href={`/tests/${test.id}`} className="mr-2 rounded-full px-3 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-100 hover:text-slate-900">
+                      Preview
+                    </Link>
+                    <button
+                      type="button"
+                      onClick={() => void handleTogglePublish(test)}
+                      disabled={togglingTestId === test.id}
+                      className={`rounded-full border px-3 py-1.5 text-xs font-semibold disabled:opacity-60 ${
+                        test.isPublished
+                          ? "border-slate-300 bg-white text-slate-700 hover:border-slate-400"
+                          : "border-emerald-600 bg-emerald-600 text-white hover:bg-emerald-500"
                       }`}
                     >
-                      {user.subscription?.status ?? "ACTIVE"}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3">
-                    {user.isAdmin ? (
-                      <span className="rounded-full bg-indigo-100 px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-indigo-700">Admin</span>
-                    ) : (
-                      <span className="rounded-full bg-emerald-100 px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-emerald-700">User</span>
-                    )}
+                      {togglingTestId === test.id ? "Saving..." : test.isPublished ? "Unpublish" : "Publish"}
+                    </button>
                   </td>
                 </tr>
               ))
             )}
           </tbody>
         </table>
-      </div>
+      </section>
+    </div>
+  );
+
+  const renderUsers = () => (
+    <div className="space-y-6">
+      <SectionHeader
+        title="Users"
+        description={`${stats.totalUsers} registered · ${stats.activePaidUsers} paid · ${stats.adminUsers} admin${stats.adminUsers === 1 ? "" : "s"}`}
+      />
+
+      <section className={cardClass}>
+        <div className="flex flex-col gap-2 border-b border-slate-200 p-4 sm:flex-row">
+          <input
+            type="search"
+            value={userSearch}
+            onChange={(event) => setUserSearch(event.target.value)}
+            placeholder="Search by name or email"
+            aria-label="Search users"
+            className={`${inputClass} sm:max-w-xs`}
+          />
+          <select
+            value={userAccessFilter}
+            onChange={(event) => setUserAccessFilter(event.target.value as "all" | "admin" | "user")}
+            aria-label="Filter by role"
+            className={`${inputClass} sm:w-40`}
+          >
+            <option value="all">All roles</option>
+            <option value="admin">Admins</option>
+            <option value="user">Students</option>
+          </select>
+        </div>
+
+        <div className="overflow-x-auto">
+          <table className="min-w-full text-left text-sm">
+            <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
+              <tr>
+                <th className="px-4 py-3 font-semibold">User</th>
+                <th className="px-4 py-3 font-semibold">Joined</th>
+                <th className="px-4 py-3 font-semibold">Plan</th>
+                <th className="px-4 py-3 font-semibold">Status</th>
+                <th className="px-4 py-3 font-semibold">Role</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {filteredUsers.length === 0 ? (
+                <tr>
+                  <td colSpan={5} className="px-4 py-10 text-center text-slate-500">
+                    {users.length === 0 ? "No users yet." : "No users match your search."}
+                  </td>
+                </tr>
+              ) : (
+                filteredUsers.map((user) => {
+                  const plan = user.subscription?.plan ?? "FREE";
+                  const status = user.subscription?.status ?? "ACTIVE";
+                  return (
+                    <tr key={user.id} className="hover:bg-slate-50">
+                      <td className="px-4 py-3">
+                        <div className="flex items-center gap-3">
+                          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-indigo-100 text-xs font-bold text-indigo-700">
+                            {user.name.charAt(0).toUpperCase()}
+                          </span>
+                          <span className="min-w-0">
+                            <span className="block truncate font-medium text-slate-900">{user.name}</span>
+                            <span className="block truncate text-xs text-slate-500">{user.email}</span>
+                          </span>
+                        </div>
+                      </td>
+                      <td className="whitespace-nowrap px-4 py-3 text-slate-600">
+                        {new Date(user.createdAt).toLocaleDateString("en-IN", { dateStyle: "medium" })}
+                      </td>
+                      <td className="px-4 py-3 text-slate-600">{plan.charAt(0) + plan.slice(1).toLowerCase()}</td>
+                      <td className="px-4 py-3">
+                        <Pill className={status === "ACTIVE" ? "bg-emerald-50 text-emerald-700" : "bg-slate-100 text-slate-600"}>
+                          {status.charAt(0) + status.slice(1).toLowerCase()}
+                        </Pill>
+                      </td>
+                      <td className="px-4 py-3">
+                        <Pill className={user.isAdmin ? "bg-indigo-50 text-indigo-700" : "bg-slate-100 text-slate-600"}>
+                          {user.isAdmin ? "Admin" : "Student"}
+                        </Pill>
+                      </td>
+                    </tr>
+                  );
+                })
+              )}
+            </tbody>
+          </table>
+        </div>
+      </section>
     </div>
   );
 
   return (
-    <main className="min-h-screen bg-slate-100 px-4 py-12 text-slate-900 sm:px-6 lg:px-8">
-      <div className="mx-auto max-w-7xl space-y-8">
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-          <div>
-            <p className="text-sm font-semibold uppercase tracking-[0.2em] text-indigo-600">Admin portal</p>
-            <h1 className="mt-2 text-3xl font-bold">Mock Test Management</h1>
+    <div className="min-h-screen bg-slate-50 text-slate-900 lg:grid lg:grid-cols-[240px_1fr]">
+      {/* Sidebar (desktop) / top bar (mobile) */}
+      <aside className="sticky top-0 z-20 border-b border-slate-200 bg-white lg:h-screen lg:border-b-0 lg:border-r">
+        <div className="flex h-full flex-col">
+          <div className="flex items-center justify-between gap-3 px-4 py-4 lg:px-5 lg:py-6">
+            <Link href="/" className="flex items-center gap-2.5">
+              <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-indigo-600 text-sm font-bold text-white">M</span>
+              <span>
+                <span className="block text-sm font-semibold leading-tight text-slate-900">Mock Test Platform</span>
+                <span className="block text-xs text-slate-500">Admin</span>
+              </span>
+            </Link>
+            <div className="flex gap-1 lg:hidden">
+              <Link href="/" className="rounded-full px-3 py-1.5 text-sm font-medium text-slate-600 hover:bg-slate-100">
+                Site
+              </Link>
+              <button type="button" onClick={() => void handleLogout()} className="rounded-full px-3 py-1.5 text-sm font-medium text-slate-600 hover:bg-slate-100">
+                Log out
+              </button>
+            </div>
           </div>
-          <div className="flex items-center gap-3">
-            <a href="/questions" className="rounded-full border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700">
-              Practice area
-            </a>
+
+          <nav className="flex gap-1 overflow-x-auto px-3 pb-3 lg:flex-1 lg:flex-col lg:overflow-visible lg:pb-0" aria-label="Admin sections">
+            {tabs.map((tab) => {
+              const isActive = activeTab === tab.key;
+              return (
+                <button
+                  key={tab.key}
+                  type="button"
+                  onClick={() => switchTab(tab.key)}
+                  aria-current={isActive ? "page" : undefined}
+                  className={`flex shrink-0 items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium ${
+                    isActive ? "bg-indigo-50 text-indigo-700" : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+                  }`}
+                >
+                  <Icon path={tab.icon} className="hidden h-[18px] w-[18px] lg:block" />
+                  <span className="whitespace-nowrap">{tab.label}</span>
+                  {tabCounts[tab.key] !== undefined && (
+                    <span className={`ml-auto rounded-full px-2 text-xs ${isActive ? "bg-indigo-100" : "bg-slate-100 text-slate-500"}`}>
+                      {tabCounts[tab.key]}
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+          </nav>
+
+          <div className="hidden space-y-1 border-t border-slate-200 p-3 lg:block">
+            <Link href="/" className="flex items-center rounded-xl px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 hover:text-slate-900">
+              ← View site
+            </Link>
             <button
               type="button"
-              onClick={handleLogout}
-              className="rounded-full bg-slate-900 px-4 py-2 text-sm font-medium text-white"
+              onClick={() => void handleLogout()}
+              className="flex w-full items-center rounded-xl px-3 py-2 text-left text-sm font-medium text-slate-600 hover:bg-slate-100 hover:text-slate-900"
             >
-              Logout
+              Log out
             </button>
           </div>
         </div>
+      </aside>
 
-        <div className="rounded-3xl border border-slate-200 bg-white p-2 shadow-sm">
-          <nav className="flex flex-wrap gap-2">
-            {tabs.map((tab) => (
-              <button
-                key={tab.key}
-                type="button"
-                onClick={() => setActiveTab(tab.key)}
-                className={`rounded-full px-4 py-2 text-sm font-medium transition ${
-                  activeTab === tab.key
-                    ? "bg-slate-900 text-white"
-                    : "bg-slate-100 text-slate-600 hover:bg-slate-200"
-                }`}
-              >
-                {tab.label}
-              </button>
-            ))}
-          </nav>
+      <main className="min-w-0 px-4 py-8 sm:px-6 lg:px-10">
+        <div className="mx-auto max-w-6xl space-y-6">
+          <NoticeBanner notice={notice} onDismiss={() => setNotice(null)} />
+          {activeTab === "overview" && renderOverview()}
+          {activeTab === "questions" && renderQuestions()}
+          {activeTab === "tests" && renderTests()}
+          {activeTab === "users" && renderUsers()}
         </div>
+      </main>
 
-        {activeTab === "overview" && renderOverview()}
-        {activeTab === "questions" && renderQuestions()}
-        {activeTab === "tests" && renderTests()}
-        {activeTab === "users" && renderUsers()}
-      </div>
-    </main>
+      <datalist id="exam-presets">
+        {examPresetOptions.map((option) => (
+          <option key={option} value={option} />
+        ))}
+      </datalist>
+      <datalist id="question-categories">
+        {categories.map((category) => (
+          <option key={category} value={category} />
+        ))}
+      </datalist>
+    </div>
   );
 }

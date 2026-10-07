@@ -19,7 +19,14 @@ export async function GET(
       userId: user.id,
     },
     include: {
-      mockTest: true,
+      mockTest: {
+        include: {
+          questions: {
+            include: { question: true },
+            orderBy: { questionOrder: "asc" },
+          },
+        },
+      },
       answers: {
         include: {
           question: true,
@@ -35,26 +42,34 @@ export async function GET(
 
   const categoryMap = new Map<string, { total: number; correct: number }>();
 
-  const questionReview = attempt.answers.map((answer) => {
-    const category = answer.question.category;
+  const answerByQuestion = new Map(attempt.answers.map((answer) => [answer.questionId, answer]));
+  // Mock test attempts are reviewed in test order, including skipped questions.
+  const reviewedQuestions = attempt.mockTest
+    ? attempt.mockTest.questions.map((item) => item.question)
+    : attempt.answers.map((answer) => answer.question);
+
+  const questionReview = reviewedQuestions.map((question) => {
+    const answer = answerByQuestion.get(question.id);
+    const isCorrect = answer?.isCorrect ?? false;
+    const category = question.category;
     const previous = categoryMap.get(category) ?? { total: 0, correct: 0 };
 
     categoryMap.set(category, {
       total: previous.total + 1,
-      correct: previous.correct + (answer.isCorrect ? 1 : 0),
+      correct: previous.correct + (isCorrect ? 1 : 0),
     });
 
     return {
-      id: answer.id,
-      questionId: answer.questionId,
-      questionText: answer.question.questionText,
+      id: answer?.id ?? question.id,
+      questionId: question.id,
+      questionText: question.questionText,
       category,
-      difficulty: answer.question.difficulty,
-      selectedOption: answer.selectedOption,
-      correctOption: answer.question.correctOption,
-      isCorrect: answer.isCorrect,
-      options: Array.isArray(answer.question.options) ? (answer.question.options as string[]) : [],
-      explanation: answer.question.explanation,
+      difficulty: question.difficulty,
+      selectedOption: answer?.selectedOption ?? null,
+      correctOption: question.correctOption,
+      isCorrect,
+      options: Array.isArray(question.options) ? (question.options as string[]) : [],
+      explanation: question.explanation,
     };
   });
 

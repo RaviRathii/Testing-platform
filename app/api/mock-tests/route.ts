@@ -13,13 +13,11 @@ export async function GET() {
     where: { isPublished: true },
     orderBy: { createdAt: "desc" },
     include: {
-      questions: {
-        include: {
-          question: true,
-        },
-        orderBy: { questionOrder: "asc" },
+      _count: { select: { questions: true } },
+      attempts: {
+        where: { userId: user.id },
+        select: { score: true },
       },
-      createdBy: true,
     },
   });
 
@@ -30,16 +28,9 @@ export async function GET() {
       examName: test.examName,
       description: test.description,
       durationMinutes: test.durationMinutes,
-      questionCount: test.questions.length,
-      createdBy: test.createdBy.name,
-      questions: test.questions.map((item) => ({
-        id: item.question.id,
-        category: item.question.category,
-        difficulty: item.question.difficulty,
-        questionText: item.question.questionText,
-        options: Array.isArray(item.question.options) ? (item.question.options as string[]) : [],
-        explanation: item.question.explanation,
-      })),
+      questionCount: test._count.questions,
+      attemptCount: test.attempts.length,
+      bestScore: test.attempts.length ? Math.max(...test.attempts.map((attempt) => attempt.score)) : null,
     })),
   );
 }

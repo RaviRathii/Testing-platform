@@ -60,23 +60,27 @@ function parseCsvRows(text: string): string[][] {
   return rows;
 }
 
-function parseCorrectOption(value?: string | null): number {
-  if (!value) {
-    return 0;
-  }
-
+// Accepts a letter ("C", "Option C", "(c)"), a 1-based number ("3"), or the answer text itself ("Mars").
+// Returns null when the value can't be resolved, so the row is skipped instead of silently defaulting to A.
+function parseCorrectOption(value: string, options: string[]): number | null {
   const normalized = value.trim().toLowerCase();
-  if (/[a-d]/.test(normalized)) {
-    const map: Record<string, number> = { a: 0, b: 1, c: 2, d: 3 };
-    return map[normalized] ?? 0;
+
+  if (!normalized) {
+    return null;
   }
 
-  const numericValue = Number(normalized.replace(/[^0-9]/g, ""));
-  if (!Number.isNaN(numericValue)) {
-    return Math.min(Math.max(numericValue - 1, 0), 3);
+  const letterMatch = normalized.match(/^(?:option\s*)?\(?([a-d])\)?\.?$/);
+  if (letterMatch) {
+    return letterMatch[1].charCodeAt(0) - "a".charCodeAt(0);
   }
 
-  return 0;
+  const numberMatch = normalized.match(/^(?:option\s*)?([1-4])$/);
+  if (numberMatch) {
+    return Number(numberMatch[1]) - 1;
+  }
+
+  const textMatch = options.findIndex((option) => option.trim().toLowerCase() === normalized);
+  return textMatch >= 0 ? textMatch : null;
 }
 
 export async function POST(request: Request) {
@@ -122,6 +126,7 @@ export async function POST(request: Request) {
     }
 
     const questionIds: string[] = [];
+    const skippedRows: number[] = [];
     const admin = await requireAdmin();
 
     for (let rowIndex = 1; rowIndex < rows.length; rowIndex += 1) {
@@ -146,7 +151,18 @@ export async function POST(request: Request) {
       const rawDifficulty = (record.difficulty ?? difficultyFallback).trim().toUpperCase();
       const normalizedDifficulty = difficultyValues.has(rawDifficulty) ? rawDifficulty : "MEDIUM";
       const explanation = (record.explanation ?? "").trim();
-      const correctOption = parseCorrectOption(record.correctoption ?? record.correctanswer ?? "A");
+      const correctOption = parseCorrectOption(record.correctoption ?? record.correctanswer ?? "", [
+        optionA,
+        optionB,
+        optionC,
+        optionD,
+      ]);
+
+      if (correctOption === null) {
+        // Row numbers are 1-based and include the header row, matching what a spreadsheet shows.
+        skippedRows.push(rowIndex + 1);
+        continue;
+      }
 
       const question = await prisma.question.create({
         data: {
@@ -165,7 +181,15 @@ export async function POST(request: Request) {
     }
 
     if (questionIds.length === 0) {
-      return NextResponse.json({ error: "No valid questions were found in the uploaded CSV file." }, { status: 400 });
+      return NextResponse.json(
+        {
+          error: skippedRows.length
+            ? `No questions imported: the correct option could not be read on rows ${skippedRows.join(", ")}. Use A–D, 1–4, or the exact answer text.`
+            : "No valid questions were found in the uploaded CSV file.",
+          skippedRows,
+        },
+        { status: 400 },
+      );
     }
 
     let createdTest: { id: string; title: string; questionCount: number } | null = null;
@@ -201,6 +225,7 @@ export async function POST(request: Request) {
     return NextResponse.json(
       {
         created: questionIds.length,
+        skippedRows,
         test: createdTest,
       },
       { status: 201 },

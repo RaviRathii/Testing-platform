@@ -9,7 +9,7 @@ const attemptAnswerSchema = z.object({
 });
 
 const attemptSubmissionSchema = z.object({
-  answers: z.array(attemptAnswerSchema).min(1),
+  answers: z.array(attemptAnswerSchema),
   mockTestId: z.string().optional(),
 });
 
@@ -95,26 +95,32 @@ export async function POST(request: Request) {
     );
   }
 
-  let questionIdsToValidate = [...new Set(payload.data.answers.map((answer) => answer.questionId))];
+  const answersByQuestion = new Map(
+    payload.data.answers.map((answer) => [answer.questionId, answer.selectedOption]),
+  );
+  let questionIdsToValidate = [...answersByQuestion.keys()];
 
   if (payload.data.mockTestId) {
     const mockTest = await prisma.mockTest.findUnique({
       where: { id: payload.data.mockTestId },
-      include: { questions: { include: { question: true } } },
+      include: { questions: true },
     });
 
-    if (!mockTest) {
+    if (!mockTest || (!mockTest.isPublished && !user.isAdmin)) {
       return NextResponse.json({ error: "Selected mock test not found." }, { status: 404 });
     }
 
-    const validQuestionIds = mockTest.questions.map((item) => item.questionId);
-    questionIdsToValidate = [...new Set(validQuestionIds)];
+    // Score against every question in the test so skipped questions count as wrong.
+    questionIdsToValidate = [...new Set(mockTest.questions.map((item) => item.questionId))];
+  } else if (questionIdsToValidate.length === 0) {
+    return NextResponse.json({ error: "Answer at least one question before submitting." }, { status: 400 });
   }
 
   const questions = await prisma.question.findMany({
     where: {
       id: { in: questionIdsToValidate },
-      isActive: true,
+      // A published test keeps working even if one of its questions is later deactivated.
+      ...(payload.data.mockTestId ? {} : { isActive: true }),
     },
   });
 
@@ -132,27 +138,26 @@ export async function POST(request: Request) {
     );
   }
 
-  const questionMap = new Map(questions.map((question) => [question.id, question]));
-
   let correctAnswers = 0;
-  const answerRecords = payload.data.answers
-    .filter((answer) => questionMap.has(answer.questionId))
-    .map((answer) => {
-    const question = questionMap.get(answer.questionId);
-    const isCorrect = question ? question.correctOption === answer.selectedOption : false;
+  // Answers to questions outside the test are ignored.
+  const answerRecords = questions
+    .filter((question) => answersByQuestion.has(question.id))
+    .map((question) => {
+      const selectedOption = answersByQuestion.get(question.id)!;
+      const isCorrect = question.correctOption === selectedOption;
 
-    if (isCorrect) {
-      correctAnswers += 1;
-    }
+      if (isCorrect) {
+        correctAnswers += 1;
+      }
 
       return {
-        questionId: answer.questionId,
-        selectedOption: answer.selectedOption,
+        questionId: question.id,
+        selectedOption,
         isCorrect,
       };
     });
 
-  const totalQuestions = answerRecords.length || payload.data.answers.length;
+  const totalQuestions = questions.length;
   const score = totalQuestions === 0 ? 0 : Math.round((correctAnswers / totalQuestions) * 100);
 
   const attempt = await prisma.quizAttempt.create({
@@ -163,6 +168,7 @@ export async function POST(request: Request) {
       totalQuestions,
       correctAnswers,
       score,
+      submittedAt: new Date(),
       answers: {
         create: answerRecords.map((record) => ({
           questionId: record.questionId,
