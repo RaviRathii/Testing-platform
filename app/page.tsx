@@ -64,12 +64,12 @@ export default function Home() {
       <section className="mx-auto max-w-6xl px-4 pb-16 pt-12 sm:px-6 sm:pt-20 lg:px-8">
         <div className="grid items-center gap-12 lg:grid-cols-[1.15fr_0.85fr]">
           <div>
-            <p className="inline-flex items-center gap-2 rounded-full border border-indigo-200 bg-white px-3 py-1 text-xs font-semibold text-indigo-700">
+            <p className="inline-flex items-center gap-2 rounded-full border border-indigo-200 bg-surface px-3 py-1 text-xs font-semibold text-indigo-700">
               <span className="h-1.5 w-1.5 rounded-full bg-indigo-500" />
               SSC, Banking, Railway, UPSC &amp; Engineering
             </p>
             <h1 className="mt-6 text-4xl font-bold leading-tight tracking-tight text-slate-900 sm:text-5xl">
-              Practise like it&apos;s <span className="text-indigo-600">exam day.</span>
+              Practise like it&apos;s <span className="text-indigo-700">exam day.</span>
             </h1>
             <p className="mt-5 max-w-xl text-lg leading-8 text-slate-600">
               Timed mock tests with a real exam interface, instant scoring, and detailed solutions — so you know
@@ -85,7 +85,7 @@ export default function Home() {
               </Link>
               <Link
                 href="/courses"
-                className="rounded-full border border-slate-300 bg-white px-6 py-3 text-center text-base font-semibold text-slate-700 hover:border-slate-400 hover:text-slate-900"
+                className="rounded-full border border-slate-300 bg-surface px-6 py-3 text-center text-base font-semibold text-slate-700 hover:border-slate-400 hover:text-slate-900"
               >
                 Explore courses
               </Link>
@@ -95,8 +95,8 @@ export default function Home() {
 
           {/* Product preview: a static sample question, not live data. */}
           <div className="relative" aria-label="Preview of the test interface">
-            <div className="absolute -inset-4 -z-10 rounded-[2rem] bg-gradient-to-br from-indigo-200/60 via-white to-violet-200/50 blur-2xl" />
-            <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-xl shadow-slate-300/40">
+            <div className="absolute -inset-4 -z-10 rounded-[2rem] bg-gradient-to-br from-indigo-200/60 via-surface to-violet-200/50 blur-2xl" />
+            <div className="rounded-3xl border border-slate-200 bg-surface p-5 shadow-xl shadow-slate-300/40">
               <div className="flex items-center justify-between">
                 <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Sample question</p>
                 <span className="rounded-full bg-indigo-100 px-2.5 py-1 font-mono text-xs font-semibold text-indigo-700">
@@ -148,11 +148,11 @@ export default function Home() {
       </section>
 
       {/* Features */}
-      <section className="border-y border-slate-200 bg-white">
+      <section className="border-y border-slate-200 bg-surface">
         <div className="mx-auto grid max-w-6xl gap-8 px-4 py-14 sm:grid-cols-2 sm:px-6 lg:grid-cols-4 lg:px-8">
           {features.map((feature) => (
             <div key={feature.title}>
-              <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600">
+              <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-50 text-indigo-700">
                 <Icon path={feature.icon} />
               </span>
               <h3 className="mt-4 font-semibold text-slate-900">{feature.title}</h3>
@@ -187,8 +187,8 @@ export default function Home() {
               onClick={() => setActiveCategory(category)}
               className={`whitespace-nowrap rounded-full px-4 py-2 text-sm font-semibold ${
                 activeCategory === category
-                  ? "bg-slate-900 text-white shadow-sm"
-                  : "border border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:text-slate-900"
+                  ? "bg-ink text-white shadow-sm"
+                  : "border border-slate-200 bg-surface text-slate-600 hover:border-slate-300 hover:text-slate-900"
               }`}
             >
               {category}
@@ -206,7 +206,7 @@ export default function Home() {
 
       {/* How it works */}
       <section className="mx-auto max-w-6xl px-4 pb-16 sm:px-6 lg:px-8">
-        <div className="rounded-3xl bg-slate-900 px-6 py-12 text-white sm:px-10">
+        <div className="rounded-3xl bg-ink px-6 py-12 text-white sm:px-10">
           <p className="text-sm font-semibold uppercase tracking-[0.2em] text-indigo-300">How it works</p>
           <h2 className="mt-2 text-3xl font-bold tracking-tight">Three steps to a better score</h2>
           <ol className="mt-10 grid gap-8 md:grid-cols-3">
@@ -217,7 +217,7 @@ export default function Home() {
                 </span>
                 <div>
                   <h3 className="font-semibold">{step.title}</h3>
-                  <p className="mt-1 text-sm leading-6 text-slate-300">{step.description}</p>
+                  <p className="mt-1 text-sm leading-6 text-white/70">{step.description}</p>
                 </div>
               </li>
             ))}
@@ -227,7 +227,7 @@ export default function Home() {
 
       {/* Pricing */}
       <section id="pricing" className="mx-auto max-w-6xl scroll-mt-20 px-4 pb-20 sm:px-6 lg:px-8">
-        <div className="grid items-center gap-10 rounded-3xl border border-slate-200 bg-white p-8 shadow-sm sm:p-10 lg:grid-cols-2">
+        <div className="grid items-center gap-10 rounded-3xl border border-slate-200 bg-surface p-8 shadow-sm sm:p-10 lg:grid-cols-2">
           <div>
             <p className="text-sm font-semibold uppercase tracking-[0.2em] text-indigo-700">Pricing</p>
             <h2 className="mt-2 text-3xl font-bold tracking-tight text-slate-900">One simple plan</h2>
@@ -258,7 +258,7 @@ export default function Home() {
         </div>
       </section>
 
-      <footer className="border-t border-slate-200 bg-white">
+      <footer className="border-t border-slate-200 bg-surface">
         <div className="mx-auto flex max-w-6xl flex-col gap-3 px-4 py-8 text-sm text-slate-500 sm:flex-row sm:items-center sm:justify-between sm:px-6 lg:px-8">
           <p>© {new Date().getFullYear()} Mock Test Platform</p>
           <p>Coming soon: leaderboards and personalised study plans.</p>

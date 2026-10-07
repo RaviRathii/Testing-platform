@@ -9,7 +9,7 @@ export function CourseCard({ course }: { course: Course }) {
   return (
     <Link
       href={`/courses/${course.slug}`}
-      className="group flex flex-col rounded-2xl border border-slate-200 bg-white p-5 shadow-sm hover:border-indigo-200 hover:shadow-md"
+      className="group flex flex-col rounded-2xl border border-slate-200 bg-surface p-5 shadow-sm hover:border-indigo-200 hover:shadow-md"
     >
       <div className="flex items-start justify-between gap-3">
         <h3 className="text-lg font-semibold text-slate-900">{course.name}</h3>

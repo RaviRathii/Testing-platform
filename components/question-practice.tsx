@@ -232,7 +232,7 @@ export function QuestionPractice({ title = "Question bank", filter }: { title?: 
   };
 
   if (loading) {
-    return <div className="rounded-2xl border border-slate-200 bg-white p-6">Loading practice questions...</div>;
+    return <div className="rounded-2xl border border-slate-200 bg-surface p-6">Loading practice questions...</div>;
   }
 
   if (!user) {
@@ -249,7 +249,7 @@ export function QuestionPractice({ title = "Question bank", filter }: { title?: 
           </a>
           <a
             href="/signup"
-            className="inline-block rounded-full border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700"
+            className="inline-block rounded-full border border-slate-300 bg-surface px-4 py-2 text-sm font-semibold text-slate-700"
           >
             Create account
           </a>
@@ -291,7 +291,7 @@ export function QuestionPractice({ title = "Question bank", filter }: { title?: 
 
   return (
     <div className="space-y-6">
-      <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+      <div className="rounded-2xl border border-slate-200 bg-surface p-4 shadow-sm">
         <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
           <div>
             <p className="text-sm font-semibold uppercase tracking-[0.2em] text-slate-500">Practice</p>
@@ -323,9 +323,9 @@ export function QuestionPractice({ title = "Question bank", filter }: { title?: 
       </div>
 
       {!result ? (
-        <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+        <div className="rounded-2xl border border-slate-200 bg-surface p-5 shadow-sm">
           <div className="mb-4 flex items-center justify-between gap-4">
-            <p className="text-sm font-semibold uppercase tracking-[0.2em] text-indigo-600">
+            <p className="text-sm font-semibold uppercase tracking-[0.2em] text-indigo-700">
               Question {currentIndex + 1} / {questions.length}
             </p>
             <span className="rounded-full bg-amber-100 px-2 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-amber-700">
@@ -368,7 +368,7 @@ export function QuestionPractice({ title = "Question bank", filter }: { title?: 
                 type="button"
                 onClick={() => setCurrentIndex((previous) => Math.max(0, previous - 1))}
                 disabled={currentIndex === 0}
-                className="rounded-full border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 disabled:cursor-not-allowed disabled:opacity-50"
+                className="rounded-full border border-slate-300 bg-surface px-4 py-2 text-sm font-semibold text-slate-700 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 Previous
               </button>
@@ -376,7 +376,7 @@ export function QuestionPractice({ title = "Question bank", filter }: { title?: 
                 type="button"
                 onClick={() => setCurrentIndex((previous) => Math.min(questions.length - 1, previous + 1))}
                 disabled={currentIndex === questions.length - 1}
-                className="rounded-full border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 disabled:cursor-not-allowed disabled:opacity-50"
+                className="rounded-full border border-slate-300 bg-surface px-4 py-2 text-sm font-semibold text-slate-700 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 Next
               </button>
@@ -390,7 +390,7 @@ export function QuestionPractice({ title = "Question bank", filter }: { title?: 
                   void handleSubmit(false);
                 }}
                 disabled={isSubmitting}
-                className="rounded-full bg-slate-900 px-5 py-2.5 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-65"
+                className="rounded-full bg-ink px-5 py-2.5 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-65"
               >
                 {isSubmitting ? "Submitting..." : "Submit exam"}
               </button>
@@ -409,21 +409,21 @@ export function QuestionPractice({ title = "Question bank", filter }: { title?: 
             {result.attemptId && (
               <Link
                 href={`/results/${result.attemptId}`}
-                className="rounded-full bg-emerald-700 px-4 py-2 text-sm font-semibold text-white"
+                className="rounded-full bg-emerald-600 px-4 py-2 text-sm font-semibold text-white"
               >
                 Review answers &amp; explanations
               </Link>
             )}
             <Link
               href="/profile"
-              className="rounded-full border border-emerald-300 bg-white px-4 py-2 text-sm font-semibold text-emerald-800"
+              className="rounded-full border border-emerald-300 bg-surface px-4 py-2 text-sm font-semibold text-emerald-800"
             >
               View profile results
             </Link>
             <button
               type="button"
               onClick={() => window.location.reload()}
-              className="rounded-full border border-emerald-300 bg-white px-4 py-2 text-sm font-semibold text-emerald-800"
+              className="rounded-full border border-emerald-300 bg-surface px-4 py-2 text-sm font-semibold text-emerald-800"
             >
               Retake exam
             </button>

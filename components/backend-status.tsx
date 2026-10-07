@@ -48,7 +48,7 @@ export function BackendStatus() {
         : "Backend Status: Disconnected";
 
   return (
-    <div className="rounded-2xl border border-slate-200 bg-white/80 p-4 shadow-sm backdrop-blur-sm">
+    <div className="rounded-2xl border border-slate-200 bg-surface/80 p-4 shadow-sm backdrop-blur-sm">
       <p className="text-sm font-semibold uppercase tracking-[0.2em] text-slate-500">
         Platform status
       </p>

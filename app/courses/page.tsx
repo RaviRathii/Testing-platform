@@ -30,7 +30,7 @@ export default function CoursesPage() {
             <a
               key={category}
               href={`#${anchor(category)}`}
-              className="whitespace-nowrap rounded-full border border-slate-200 bg-white px-3.5 py-1.5 text-sm font-semibold text-slate-700 hover:border-indigo-300 hover:text-indigo-700"
+              className="whitespace-nowrap rounded-full border border-slate-200 bg-surface px-3.5 py-1.5 text-sm font-semibold text-slate-700 hover:border-indigo-300 hover:text-indigo-700"
             >
               {category}
               <span className="ml-1.5 text-xs font-medium text-slate-400">{coursesByCategory(category).length}</span>

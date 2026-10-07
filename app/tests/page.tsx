@@ -62,7 +62,7 @@ export default function MockTestsPage() {
         </div>
 
         {loading ? (
-          <div className="rounded-2xl border border-slate-200 bg-white p-6">Loading mock tests...</div>
+          <div className="rounded-2xl border border-slate-200 bg-surface p-6">Loading mock tests...</div>
         ) : needsLogin ? (
           <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-6 text-slate-700">
             <p className="text-lg font-semibold text-slate-900">Login required</p>
@@ -73,7 +73,7 @@ export default function MockTestsPage() {
               </a>
               <a
                 href="/signup"
-                className="rounded-full border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700"
+                className="rounded-full border border-slate-300 bg-surface px-4 py-2 text-sm font-semibold text-slate-700"
               >
                 Create account
               </a>
@@ -97,7 +97,7 @@ export default function MockTestsPage() {
                     className={`rounded-full border px-3 py-1.5 text-sm font-medium transition ${
                       examFilter === name
                         ? "border-indigo-600 bg-indigo-600 text-white"
-                        : "border-slate-300 bg-white text-slate-700 hover:border-slate-400"
+                        : "border-slate-300 bg-surface text-slate-700 hover:border-slate-400"
                     }`}
                   >
                     {name}
@@ -108,8 +108,8 @@ export default function MockTestsPage() {
 
             <div className="grid gap-4 sm:grid-cols-2">
               {visibleTests.map((test) => (
-                <div key={test.id} className="flex flex-col rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-                  <p className="text-xs font-semibold uppercase tracking-[0.2em] text-indigo-600">{test.examName}</p>
+                <div key={test.id} className="flex flex-col rounded-2xl border border-slate-200 bg-surface p-5 shadow-sm">
+                  <p className="text-xs font-semibold uppercase tracking-[0.2em] text-indigo-700">{test.examName}</p>
                   <h2 className="mt-2 text-lg font-bold text-slate-900">{test.title}</h2>
                   {test.description && <p className="mt-2 text-sm text-slate-600">{test.description}</p>}
 
@@ -125,7 +125,7 @@ export default function MockTestsPage() {
 
                   <Link
                     href={`/tests/${test.id}`}
-                    className="mt-5 self-start rounded-full bg-slate-900 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-700"
+                    className="mt-5 self-start rounded-full bg-ink px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-ink-hover"
                   >
                     {test.attemptCount > 0 ? "Retake test" : "Start test"}
                   </Link>

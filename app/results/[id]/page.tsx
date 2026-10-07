@@ -80,16 +80,16 @@ export default function ResultsDetailPage() {
 
   if (loading) {
     return (
-      <main className="min-h-screen bg-slate-100 p-8 text-slate-900">
-        <div className="mx-auto max-w-5xl rounded-3xl border border-slate-200 bg-white p-8">Loading result details...</div>
+      <main className="min-h-screen p-8 text-slate-900">
+        <div className="mx-auto max-w-5xl rounded-3xl border border-slate-200 bg-surface p-8">Loading result details...</div>
       </main>
     );
   }
 
   if (error || !data) {
     return (
-      <main className="min-h-screen bg-slate-100 p-8 text-slate-900">
-        <div className="mx-auto max-w-xl rounded-3xl border border-dashed border-slate-300 bg-white p-8 text-center">
+      <main className="min-h-screen p-8 text-slate-900">
+        <div className="mx-auto max-w-xl rounded-3xl border border-dashed border-slate-300 bg-surface p-8 text-center">
           <p className="text-xl font-semibold">Result unavailable</p>
           <p className="mt-2 text-sm text-slate-600">{error || "This result could not be loaded."}</p>
           <Link href="/profile" className="mt-5 inline-block rounded-full bg-indigo-600 px-4 py-2 text-sm font-semibold text-white">
@@ -103,32 +103,32 @@ export default function ResultsDetailPage() {
   const optionLabels = ["A", "B", "C", "D"];
 
   return (
-    <main className="min-h-screen bg-slate-100 px-4 py-12 text-slate-900 sm:px-6 lg:px-8">
+    <main className="min-h-screen px-4 py-12 text-slate-900 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-6xl space-y-8">
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div>
-            <p className="text-sm font-semibold uppercase tracking-[0.2em] text-indigo-600">Result analysis</p>
+            <p className="text-sm font-semibold uppercase tracking-[0.2em] text-indigo-700">Result analysis</p>
             <h1 className="mt-2 text-3xl font-bold">{data.attempt.title}</h1>
           </div>
-          <Link href="/profile" className="rounded-full border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700">
+          <Link href="/profile" className="rounded-full border border-slate-300 bg-surface px-4 py-2 text-sm font-medium text-slate-700">
             Back to profile
           </Link>
         </div>
 
         <div className="grid gap-4 md:grid-cols-4">
-          <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+          <div className="rounded-3xl border border-slate-200 bg-surface p-5 shadow-sm">
             <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Score</p>
             <p className="mt-2 text-3xl font-bold text-slate-900">{data.attempt.score}%</p>
           </div>
-          <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+          <div className="rounded-3xl border border-slate-200 bg-surface p-5 shadow-sm">
             <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Correct</p>
             <p className="mt-2 text-3xl font-bold text-slate-900">{data.conclusion.correctAnswers}/{data.conclusion.totalQuestions}</p>
           </div>
-          <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+          <div className="rounded-3xl border border-slate-200 bg-surface p-5 shadow-sm">
             <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Exam</p>
             <p className="mt-2 text-xl font-bold text-slate-900">{data.attempt.examName}</p>
           </div>
-          <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+          <div className="rounded-3xl border border-slate-200 bg-surface p-5 shadow-sm">
             <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Status</p>
             <p className={`mt-2 text-xl font-bold ${data.conclusion.passed ? "text-emerald-700" : "text-amber-700"}`}>
               {data.conclusion.passed ? "Passed" : "Needs work"}
@@ -138,7 +138,7 @@ export default function ResultsDetailPage() {
 
         <div className="grid gap-8 xl:grid-cols-[1.1fr_0.9fr]">
           <section className="space-y-8">
-            <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+            <div className="rounded-3xl border border-slate-200 bg-surface p-6 shadow-sm">
               <h2 className="text-xl font-semibold">Category-wise analysis</h2>
               <div className="mt-6 space-y-4">
                 {data.categoryBreakdown.map((category) => (
@@ -159,13 +159,13 @@ export default function ResultsDetailPage() {
               </div>
             </div>
 
-            <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+            <div className="rounded-3xl border border-slate-200 bg-surface p-6 shadow-sm">
               <h2 className="text-xl font-semibold">Question review</h2>
               <div className="mt-5 space-y-5">
                 {data.questionReview.map((question, index) => (
                   <div key={question.id} className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
                     <div className="flex items-center justify-between gap-3">
-                      <p className="text-sm font-semibold uppercase tracking-[0.2em] text-indigo-600">{question.category}</p>
+                      <p className="text-sm font-semibold uppercase tracking-[0.2em] text-indigo-700">{question.category}</p>
                       <span className={`rounded-full px-2 py-1 text-[10px] font-bold uppercase tracking-[0.14em] ${question.isCorrect ? "bg-emerald-100 text-emerald-700" : question.selectedOption === null ? "bg-slate-200 text-slate-600" : "bg-amber-100 text-amber-700"}`}>
                         {question.isCorrect ? "Correct" : question.selectedOption === null ? "Skipped" : "Incorrect"}
                       </span>
@@ -189,7 +189,7 @@ export default function ResultsDetailPage() {
                                 ? "border-emerald-200 bg-emerald-50 text-emerald-800"
                                 : isSelectedChoice
                                   ? "border-amber-200 bg-amber-50 text-amber-900"
-                                  : "border-slate-200 bg-white text-slate-700"
+                                  : "border-slate-200 bg-surface text-slate-700"
                             }`}
                           >
                             <span className="font-semibold text-slate-600">{optionLabels[optionIndex]}</span>
@@ -214,7 +214,7 @@ export default function ResultsDetailPage() {
           </section>
 
           <aside className="space-y-8">
-            <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+            <div className="rounded-3xl border border-slate-200 bg-surface p-6 shadow-sm">
               <h2 className="text-xl font-semibold">Exam comparison</h2>
               <div className="mt-6 space-y-5">
                 {data.examBreakdown.map((exam) => (
@@ -235,7 +235,7 @@ export default function ResultsDetailPage() {
               </div>
             </div>
 
-            <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+            <div className="rounded-3xl border border-slate-200 bg-surface p-6 shadow-sm">
               <h2 className="text-xl font-semibold">Attempt summary</h2>
               <div className="mt-5 space-y-3 text-sm text-slate-700">
                 <div className="flex justify-between gap-3">

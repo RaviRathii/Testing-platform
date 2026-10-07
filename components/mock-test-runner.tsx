@@ -266,7 +266,7 @@ export function MockTestRunner({ testId }: { testId: string }) {
   };
 
   if (phase === "loading") {
-    return <div className="rounded-2xl border border-slate-200 bg-white p-6">Loading mock test...</div>;
+    return <div className="rounded-2xl border border-slate-200 bg-surface p-6">Loading mock test...</div>;
   }
 
   if (phase === "login") {
@@ -280,7 +280,7 @@ export function MockTestRunner({ testId }: { testId: string }) {
           </a>
           <a
             href="/signup"
-            className="rounded-full border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700"
+            className="rounded-full border border-slate-300 bg-surface px-4 py-2 text-sm font-semibold text-slate-700"
           >
             Create account
           </a>
@@ -327,8 +327,8 @@ export function MockTestRunner({ testId }: { testId: string }) {
 
   if (phase === "intro") {
     return (
-      <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-        <p className="text-sm font-semibold uppercase tracking-[0.2em] text-indigo-600">{test.examName}</p>
+      <div className="rounded-2xl border border-slate-200 bg-surface p-6 shadow-sm">
+        <p className="text-sm font-semibold uppercase tracking-[0.2em] text-indigo-700">{test.examName}</p>
         <h2 className="mt-2 text-2xl font-bold text-slate-900">{test.title}</h2>
         {test.description && <p className="mt-2 text-slate-600">{test.description}</p>}
 
@@ -382,7 +382,7 @@ export function MockTestRunner({ testId }: { testId: string }) {
   return (
     <div className="grid gap-6 lg:grid-cols-[1fr_280px]">
       <div className="space-y-4">
-        <div className="sticky top-0 z-10 flex items-center justify-between gap-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+        <div className="sticky top-0 z-10 flex items-center justify-between gap-4 rounded-2xl border border-slate-200 bg-surface p-4 shadow-sm">
           <div className="min-w-0">
             <p className="truncate text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">{test.examName}</p>
             <h2 className="truncate text-lg font-bold text-slate-900">{test.title}</h2>
@@ -398,9 +398,9 @@ export function MockTestRunner({ testId }: { testId: string }) {
           </div>
         </div>
 
-        <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+        <div className="rounded-2xl border border-slate-200 bg-surface p-5 shadow-sm">
           <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
-            <p className="text-sm font-semibold uppercase tracking-[0.2em] text-indigo-600">
+            <p className="text-sm font-semibold uppercase tracking-[0.2em] text-indigo-700">
               Question {currentIndex + 1} / {test.questions.length}
             </p>
             <div className="flex gap-2">
@@ -447,7 +447,7 @@ export function MockTestRunner({ testId }: { testId: string }) {
                 type="button"
                 onClick={() => goTo(currentIndex - 1)}
                 disabled={currentIndex === 0}
-                className="rounded-full border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 disabled:cursor-not-allowed disabled:opacity-50"
+                className="rounded-full border border-slate-300 bg-surface px-4 py-2 text-sm font-semibold text-slate-700 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 Previous
               </button>
@@ -461,7 +461,7 @@ export function MockTestRunner({ testId }: { testId: string }) {
                   })
                 }
                 disabled={answers[question.id] === undefined}
-                className="rounded-full border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 disabled:cursor-not-allowed disabled:opacity-50"
+                className="rounded-full border border-slate-300 bg-surface px-4 py-2 text-sm font-semibold text-slate-700 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 Clear response
               </button>
@@ -496,7 +496,7 @@ export function MockTestRunner({ testId }: { testId: string }) {
         </div>
       </div>
 
-      <aside className="h-fit space-y-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm lg:sticky lg:top-4">
+      <aside className="h-fit space-y-4 rounded-2xl border border-slate-200 bg-surface p-4 shadow-sm lg:sticky lg:top-4">
         <div className="grid grid-cols-2 gap-2 text-xs text-slate-600">
           <span className="flex items-center gap-1.5">
             <span className="h-3 w-3 rounded border border-emerald-200 bg-emerald-50" /> Answered ({answeredCount})
@@ -531,7 +531,7 @@ export function MockTestRunner({ testId }: { testId: string }) {
           type="button"
           onClick={() => setConfirmOpen(true)}
           disabled={isSubmitting}
-          className="w-full rounded-full bg-slate-900 px-5 py-2.5 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-65"
+          className="w-full rounded-full bg-ink px-5 py-2.5 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-65"
         >
           {isSubmitting ? "Submitting..." : "Submit test"}
         </button>
@@ -539,12 +539,12 @@ export function MockTestRunner({ testId }: { testId: string }) {
 
       {confirmOpen && (
         <div
-          className="fixed inset-0 z-20 flex items-center justify-center bg-slate-900/50 px-4"
+          className="fixed inset-0 z-20 flex items-center justify-center bg-black/50 px-4"
           role="dialog"
           aria-modal="true"
           aria-labelledby="submit-dialog-title"
         >
-          <div className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-xl">
+          <div className="w-full max-w-sm rounded-2xl bg-surface p-6 shadow-xl">
             <h3 id="submit-dialog-title" className="text-lg font-bold text-slate-900">
               Submit test?
             </h3>
@@ -561,14 +561,14 @@ export function MockTestRunner({ testId }: { testId: string }) {
               <button
                 type="button"
                 onClick={() => setConfirmOpen(false)}
-                className="rounded-full border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700"
+                className="rounded-full border border-slate-300 bg-surface px-4 py-2 text-sm font-semibold text-slate-700"
               >
                 Keep going
               </button>
               <button
                 type="button"
                 onClick={() => void submit()}
-                className="rounded-full bg-slate-900 px-4 py-2 text-sm font-semibold text-white"
+                className="rounded-full bg-ink px-4 py-2 text-sm font-semibold text-white"
               >
                 Submit
               </button>

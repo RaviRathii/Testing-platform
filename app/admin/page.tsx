@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { FormEvent, ReactNode, useEffect, useMemo, useState } from "react";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { examPresetOptions } from "@/lib/exam-data";
 
 type QuestionRow = {
@@ -113,9 +114,9 @@ const tabs = [
 type TabKey = (typeof tabs)[number]["key"];
 
 const inputClass =
-  "w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20";
+  "w-full rounded-xl border border-slate-300 bg-surface px-3 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20";
 const labelClass = "block space-y-1.5 text-sm font-medium text-slate-700";
-const cardClass = "rounded-2xl border border-slate-200 bg-white shadow-sm";
+const cardClass = "rounded-2xl border border-slate-200 bg-surface shadow-sm";
 
 const difficultyTone: Record<string, string> = {
   EASY: "bg-emerald-50 text-emerald-700",
@@ -458,14 +459,14 @@ export default function AdminPage() {
   if (!isAdmin) {
     return (
       <main className="flex min-h-screen items-center justify-center px-4">
-        <div className="max-w-md rounded-3xl border border-slate-200 bg-white p-8 text-center shadow-sm">
+        <div className="max-w-md rounded-3xl border border-slate-200 bg-surface p-8 text-center shadow-sm">
           <p className="text-lg font-semibold text-slate-900">Admin access required</p>
           <p className="mt-2 text-sm text-slate-600">Log in with an admin account to manage questions, tests, and users.</p>
           <div className="mt-6 flex justify-center gap-3">
             <Link href="/login" className="rounded-full bg-indigo-600 px-5 py-2 text-sm font-semibold text-white hover:bg-indigo-500">
               Log in as admin
             </Link>
-            <Link href="/" className="rounded-full border border-slate-300 bg-white px-5 py-2 text-sm font-semibold text-slate-700">
+            <Link href="/" className="rounded-full border border-slate-300 bg-surface px-5 py-2 text-sm font-semibold text-slate-700">
               Go home
             </Link>
           </div>
@@ -661,7 +662,7 @@ export default function AdminPage() {
               <div
                 key={key}
                 className={`flex items-center gap-2 rounded-xl border p-1.5 pl-3 ${
-                  isCorrect ? "border-emerald-300 bg-emerald-50" : "border-slate-300 bg-white"
+                  isCorrect ? "border-emerald-300 bg-emerald-50" : "border-slate-300 bg-surface"
                 }`}
               >
                 <input
@@ -834,7 +835,7 @@ export default function AdminPage() {
             <button
               type="button"
               onClick={() => setQuestionPanel(questionPanel === "import" ? "none" : "import")}
-              className="rounded-full border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:border-slate-400"
+              className="rounded-full border border-slate-300 bg-surface px-4 py-2 text-sm font-semibold text-slate-700 hover:border-slate-400"
             >
               Import CSV
             </button>
@@ -1133,7 +1134,7 @@ export default function AdminPage() {
                       disabled={togglingTestId === test.id}
                       className={`rounded-full border px-3 py-1.5 text-xs font-semibold disabled:opacity-60 ${
                         test.isPublished
-                          ? "border-slate-300 bg-white text-slate-700 hover:border-slate-400"
+                          ? "border-slate-300 bg-surface text-slate-700 hover:border-slate-400"
                           : "border-emerald-600 bg-emerald-600 text-white hover:bg-emerald-500"
                       }`}
                     >
@@ -1241,7 +1242,7 @@ export default function AdminPage() {
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 lg:grid lg:grid-cols-[240px_1fr]">
       {/* Sidebar (desktop) / top bar (mobile) */}
-      <aside className="sticky top-0 z-20 border-b border-slate-200 bg-white lg:h-screen lg:border-b-0 lg:border-r">
+      <aside className="sticky top-0 z-20 border-b border-slate-200 bg-surface lg:h-screen lg:border-b-0 lg:border-r">
         <div className="flex h-full flex-col">
           <div className="flex items-center justify-between gap-3 px-4 py-4 lg:px-5 lg:py-6">
             <Link href="/" className="flex items-center gap-2.5">
@@ -1251,11 +1252,16 @@ export default function AdminPage() {
                 <span className="block text-xs text-slate-500">Admin</span>
               </span>
             </Link>
-            <div className="flex gap-1 lg:hidden">
-              <Link href="/" className="rounded-full px-3 py-1.5 text-sm font-medium text-slate-600 hover:bg-slate-100">
+            <div className="flex items-center gap-1">
+              <ThemeToggle className="lg:hidden" />
+              <Link href="/" className="rounded-full px-3 py-1.5 text-sm font-medium text-slate-600 hover:bg-slate-100 lg:hidden">
                 Site
               </Link>
-              <button type="button" onClick={() => void handleLogout()} className="rounded-full px-3 py-1.5 text-sm font-medium text-slate-600 hover:bg-slate-100">
+              <button
+                type="button"
+                onClick={() => void handleLogout()}
+                className="rounded-full px-3 py-1.5 text-sm font-medium text-slate-600 hover:bg-slate-100 lg:hidden"
+              >
                 Log out
               </button>
             </div>
@@ -1287,9 +1293,12 @@ export default function AdminPage() {
           </nav>
 
           <div className="hidden space-y-1 border-t border-slate-200 p-3 lg:block">
-            <Link href="/" className="flex items-center rounded-xl px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 hover:text-slate-900">
-              ← View site
-            </Link>
+            <div className="flex items-center justify-between">
+              <Link href="/" className="flex items-center rounded-xl px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 hover:text-slate-900">
+                ← View site
+              </Link>
+              <ThemeToggle />
+            </div>
             <button
               type="button"
               onClick={() => void handleLogout()}

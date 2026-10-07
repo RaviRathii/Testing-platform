@@ -36,7 +36,7 @@ export default async function CoursePage({ params }: Props) {
       <SiteHeader />
 
       {/* Header */}
-      <section className="border-b border-slate-200 bg-white">
+      <section className="border-b border-slate-200 bg-surface">
         <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6 lg:px-8">
           <nav aria-label="Breadcrumb" className="text-sm text-slate-500">
             <Link href="/courses" className="hover:text-slate-900">
@@ -83,7 +83,7 @@ export default async function CoursePage({ params }: Props) {
             {course.subjects.map((subject, index) => {
               const questionCount = subjectQuestionCounts[subject.id] ?? 0;
               return (
-                <li key={subject.id} className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+                <li key={subject.id} className="rounded-2xl border border-slate-200 bg-surface p-5 shadow-sm">
                   <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                     <div className="flex min-w-0 gap-4">
                       <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-indigo-50 text-sm font-bold text-indigo-700">
@@ -122,7 +122,7 @@ export default async function CoursePage({ params }: Props) {
 
         {/* Sidebar */}
         <aside className="space-y-6 lg:sticky lg:top-24 lg:self-start">
-          <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+          <section className="rounded-2xl border border-slate-200 bg-surface p-5 shadow-sm">
             <h2 className="font-semibold">Mock tests</h2>
             {tests.length === 0 ? (
               <p className="mt-2 text-sm text-slate-600">
@@ -141,7 +141,7 @@ export default async function CoursePage({ params }: Props) {
                     </span>
                     <Link
                       href={`/tests/${test.id}`}
-                      className="shrink-0 rounded-full bg-slate-900 px-3 py-1.5 text-xs font-semibold text-white hover:bg-slate-700"
+                      className="shrink-0 rounded-full bg-ink px-3 py-1.5 text-xs font-semibold text-white hover:bg-ink-hover"
                     >
                       Start
                     </Link>
@@ -154,9 +154,9 @@ export default async function CoursePage({ params }: Props) {
             </Link>
           </section>
 
-          <section className="rounded-2xl bg-slate-900 p-5 text-white">
+          <section className="rounded-2xl bg-ink p-5 text-white">
             <h2 className="font-semibold">How to use this course</h2>
-            <ol className="mt-3 list-decimal space-y-1.5 pl-5 text-sm text-slate-300">
+            <ol className="mt-3 list-decimal space-y-1.5 pl-5 text-sm text-white/70">
               <li>Work through one subject at a time, topic by topic.</li>
               <li>Practise that subject&apos;s questions and review the solutions.</li>
               <li>Take a full mock test to check your exam readiness.</li>

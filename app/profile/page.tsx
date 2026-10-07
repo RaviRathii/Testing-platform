@@ -191,13 +191,13 @@ export default function ProfilePage() {
       <main className="min-h-screen">
         <SiteHeader />
         <div className="mx-auto max-w-6xl space-y-6 px-4 py-10 sm:px-6 lg:px-8" aria-busy="true">
-          <div className="h-28 animate-pulse rounded-3xl bg-white" />
+          <div className="h-28 animate-pulse rounded-3xl bg-surface" />
           <div className="grid gap-4 sm:grid-cols-4">
             {[0, 1, 2, 3].map((item) => (
-              <div key={item} className="h-24 animate-pulse rounded-2xl bg-white" />
+              <div key={item} className="h-24 animate-pulse rounded-2xl bg-surface" />
             ))}
           </div>
-          <div className="h-64 animate-pulse rounded-3xl bg-white" />
+          <div className="h-64 animate-pulse rounded-3xl bg-surface" />
         </div>
       </main>
     );
@@ -207,14 +207,14 @@ export default function ProfilePage() {
     return (
       <main className="min-h-screen">
         <SiteHeader />
-        <div className="mx-auto mt-16 max-w-md rounded-3xl border border-slate-200 bg-white p-8 text-center shadow-sm">
+        <div className="mx-auto mt-16 max-w-md rounded-3xl border border-slate-200 bg-surface p-8 text-center shadow-sm">
           <p className="text-lg font-semibold text-slate-900">Log in to see your profile</p>
           <p className="mt-2 text-sm text-slate-600">Your results, progress, and subscription live here.</p>
           <div className="mt-6 flex justify-center gap-3">
             <Link href="/login" className="rounded-full bg-indigo-600 px-5 py-2 text-sm font-semibold text-white hover:bg-indigo-500">
               Log in
             </Link>
-            <Link href="/signup" className="rounded-full border border-slate-300 bg-white px-5 py-2 text-sm font-semibold text-slate-700 hover:border-slate-400">
+            <Link href="/signup" className="rounded-full border border-slate-300 bg-surface px-5 py-2 text-sm font-semibold text-slate-700 hover:border-slate-400">
               Sign up
             </Link>
           </div>
@@ -249,7 +249,7 @@ export default function ProfilePage() {
 
       <div className="mx-auto max-w-6xl space-y-6 px-4 py-10 sm:px-6 lg:px-8">
         {/* Identity */}
-        <section className="flex flex-col gap-5 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm sm:flex-row sm:items-center sm:justify-between">
+        <section className="flex flex-col gap-5 rounded-3xl border border-slate-200 bg-surface p-6 shadow-sm sm:flex-row sm:items-center sm:justify-between">
           <div className="flex min-w-0 items-center gap-4">
             <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-500 to-violet-600 text-2xl font-bold text-white">
               {user.name.charAt(0).toUpperCase()}
@@ -273,7 +273,7 @@ export default function ProfilePage() {
           </div>
           <div className="flex flex-wrap gap-2">
             {user.isAdmin && (
-              <Link href="/admin" className="rounded-full border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:border-slate-400">
+              <Link href="/admin" className="rounded-full border border-slate-300 bg-surface px-4 py-2 text-sm font-semibold text-slate-700 hover:border-slate-400">
                 Admin panel
               </Link>
             )}
@@ -286,7 +286,7 @@ export default function ProfilePage() {
         {/* Stats */}
         <section className="grid grid-cols-2 gap-4 lg:grid-cols-4">
           {stats.map((stat) => (
-            <div key={stat.label} className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+            <div key={stat.label} className="rounded-2xl border border-slate-200 bg-surface p-5 shadow-sm">
               <p className="text-sm text-slate-500">{stat.label}</p>
               <p className="mt-1 text-3xl font-bold tracking-tight">{stat.value}</p>
               <p className="mt-1 text-xs text-slate-500">{stat.hint}</p>
@@ -297,7 +297,7 @@ export default function ProfilePage() {
         <div className="grid gap-6 lg:grid-cols-[1fr_340px]">
           <div className="space-y-6">
             {/* Trend */}
-            <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+            <section className="rounded-3xl border border-slate-200 bg-surface p-6 shadow-sm">
               <div className="flex items-center justify-between">
                 <h2 className="text-lg font-semibold">Score trend</h2>
                 <span className="text-xs text-slate-500">Last {graphData.length || 10} attempts</span>
@@ -333,7 +333,7 @@ export default function ProfilePage() {
                             } group-hover:opacity-80`}
                             style={{ height: `${Math.max(2, attempt.score)}%` }}
                           />
-                          <span className="pointer-events-none absolute -top-1 left-1/2 hidden -translate-x-1/2 -translate-y-full whitespace-nowrap rounded-md bg-slate-900 px-2 py-1 text-[11px] text-white group-hover:block">
+                          <span className="pointer-events-none absolute -top-1 left-1/2 hidden -translate-x-1/2 -translate-y-full whitespace-nowrap rounded-md bg-ink px-2 py-1 text-[11px] text-white group-hover:block">
                             {attempt.score}% · {formatDate(attempt.submittedAt, { day: "2-digit", month: "short" })}
                           </span>
                         </Link>
@@ -352,7 +352,7 @@ export default function ProfilePage() {
             </section>
 
             {/* Attempts */}
-            <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+            <section className="rounded-3xl border border-slate-200 bg-surface p-6 shadow-sm">
               <div className="flex items-center justify-between">
                 <h2 className="text-lg font-semibold">Recent attempts</h2>
                 {attempts.length > 0 && <span className="text-xs text-slate-500">{attempts.length} total</span>}
@@ -412,7 +412,7 @@ export default function ProfilePage() {
 
           <aside className="space-y-6">
             {/* Subscription */}
-            <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+            <section className="rounded-3xl border border-slate-200 bg-surface p-6 shadow-sm">
               <h2 className="text-lg font-semibold">Subscription</h2>
 
               {user.isAdmin ? (
@@ -463,7 +463,7 @@ export default function ProfilePage() {
             </section>
 
             {/* Exam breakdown */}
-            <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+            <section className="rounded-3xl border border-slate-200 bg-surface p-6 shadow-sm">
               <h2 className="text-lg font-semibold">By exam</h2>
               {examBreakdown.length === 0 ? (
                 <p className="mt-3 text-sm text-slate-500">No exam history yet.</p>
@@ -493,7 +493,7 @@ export default function ProfilePage() {
             <button
               type="button"
               onClick={() => void handleLogout()}
-              className="w-full rounded-full border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 hover:border-slate-400"
+              className="w-full rounded-full border border-slate-300 bg-surface px-4 py-2.5 text-sm font-semibold text-slate-700 hover:border-slate-400"
             >
               Log out
             </button>

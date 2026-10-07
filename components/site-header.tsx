@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { buildApiUrl } from "@/lib/api";
 
 type HeaderUser = {
@@ -45,7 +46,7 @@ export function SiteHeader() {
   const links = user?.isAdmin ? [...navLinks, { href: "/admin", label: "Admin" }] : navLinks;
 
   return (
-    <header className="sticky top-0 z-30 border-b border-slate-200/80 bg-white/85 backdrop-blur">
+    <header className="sticky top-0 z-30 border-b border-slate-200/80 bg-surface/85 backdrop-blur">
       <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-x-4 gap-y-2 px-4 py-3 sm:flex-nowrap sm:px-6 lg:px-8">
         <Link href="/" className="flex shrink-0 items-center gap-2.5">
           <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-indigo-600 text-sm font-bold text-white shadow-sm">
@@ -72,6 +73,7 @@ export function SiteHeader() {
         </nav>
 
         <div className="flex shrink-0 items-center gap-2">
+          <ThemeToggle />
           {user === undefined ? (
             <span className="h-9 w-24 animate-pulse rounded-full bg-slate-100" aria-hidden />
           ) : user ? (
@@ -81,7 +83,7 @@ export function SiteHeader() {
                 className={`flex items-center gap-2 rounded-full border py-1 pl-1 pr-3 text-sm font-medium ${
                   pathname === "/profile"
                     ? "border-indigo-200 bg-indigo-50 text-indigo-700"
-                    : "border-slate-200 bg-white text-slate-700 hover:border-slate-300"
+                    : "border-slate-200 bg-surface text-slate-700 hover:border-slate-300"
                 }`}
               >
                 <span className="flex h-7 w-7 items-center justify-center rounded-full bg-indigo-600 text-xs font-bold text-white">
@@ -107,7 +109,7 @@ export function SiteHeader() {
               </Link>
               <Link
                 href="/signup"
-                className="rounded-full bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-700"
+                className="rounded-full bg-ink px-4 py-2 text-sm font-semibold text-white hover:bg-ink-hover"
               >
                 Sign up
               </Link>

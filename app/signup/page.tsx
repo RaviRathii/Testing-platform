@@ -37,16 +37,16 @@ export default function SignUpPage() {
   };
 
   return (
-    <main className="min-h-screen bg-slate-100 px-4 py-16 text-slate-900 sm:px-6 lg:px-8">
-      <div className="mx-auto max-w-md rounded-3xl border border-slate-200 bg-white p-8 shadow-lg shadow-slate-200/60">
+    <main className="min-h-screen px-4 py-16 text-slate-900 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-md rounded-3xl border border-slate-200 bg-surface p-8 shadow-lg shadow-slate-200/60">
         <div className="mb-8 text-center">
-          <p className="text-sm font-semibold uppercase tracking-[0.2em] text-indigo-600">Create account</p>
+          <p className="text-sm font-semibold uppercase tracking-[0.2em] text-indigo-700">Create account</p>
           <h1 className="mt-3 text-3xl font-bold">Sign up</h1>
         </div>
 
         <button
           type="button"
-          className="mb-6 flex w-full items-center justify-center gap-2 rounded-full border border-slate-300 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:border-slate-400"
+          className="mb-6 flex w-full items-center justify-center gap-2 rounded-full border border-slate-300 bg-surface px-4 py-3 text-sm font-semibold text-slate-700 transition hover:border-slate-400"
           onClick={() => {
             window.location.href = "/api/auth/google";
           }}
@@ -109,14 +109,14 @@ export default function SignUpPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full rounded-full bg-slate-900 px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-60"
+            className="w-full rounded-full bg-ink px-4 py-3 text-sm font-semibold text-white transition hover:bg-ink-hover disabled:cursor-not-allowed disabled:opacity-60"
           >
             {loading ? "Creating account..." : "Create account"}
           </button>
         </form>
 
         <div className="mt-6 text-center text-sm text-slate-600">
-          Already have an account? <a href="/login" className="font-semibold text-indigo-600">Login</a>
+          Already have an account? <a href="/login" className="font-semibold text-indigo-700">Login</a>
         </div>
       </div>
     </main>
